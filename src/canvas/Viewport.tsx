@@ -242,6 +242,22 @@ export function Viewport() {
     height: Math.abs(rubberBand.endY - rubberBand.startY),
   } : null
 
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    const type = e.dataTransfer.getData('tool-type')
+    if (!type) return
+    const rect = ref.current!.getBoundingClientRect()
+    const sx = e.clientX - rect.left
+    const sy = e.clientY - rect.top
+    const wp = screenToWorld(sx, sy, vp.panX, vp.panY, vp.zoom)
+    placeItem(type, snapToGridVal(wp.x), snapToGridVal(wp.y))
+  }, [vp, currentBoardId, snapToGrid])
+
   return (
     <div
       ref={ref}
@@ -258,6 +274,8 @@ export function Viewport() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onDoubleClick={onDoubleClick}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
     >
       <World
         panX={vp.panX}

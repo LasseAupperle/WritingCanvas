@@ -7,6 +7,7 @@ import { TopBar } from '../ui/TopBar'
 import { Toolbar } from '../ui/Toolbar'
 import { UnsortedPill, UnsortedPanel } from '../ui/UnsortedPanel'
 import { SearchOverlay } from '../ui/SearchOverlay'
+import { AlignToolbar } from '../ui/AlignToolbar'
 import { TOOLBAR_WIDTH, TOPBAR_HEIGHT } from '../lib/constants'
 import type { Item } from '../db/db'
 import { newId } from '../lib/ids'
@@ -249,9 +250,10 @@ export function BoardView() {
         className="absolute overflow-hidden"
         style={{ left: TOOLBAR_WIDTH, top: TOPBAR_HEIGHT, right: 0, bottom: 0, pointerEvents: 'none' }}
       >
-        <div style={{ pointerEvents: 'auto', position: 'absolute', top: 0, right: 0, left: 0 }}>
+        <div style={{ pointerEvents: 'auto', position: 'absolute', top: 0, right: 0, left: 0, bottom: 0 }}>
           <UnsortedPill />
           <UnsortedPanel />
+          <AlignToolbar />
         </div>
       </div>
 

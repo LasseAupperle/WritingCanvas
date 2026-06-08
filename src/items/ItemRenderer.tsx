@@ -47,6 +47,8 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
   const dragState = useRef<{
     startMX: number; startMY: number
     origPositions: Array<{ id: string; x: number; y: number }>
+    isAltDuplicate: boolean
+    duplicateIds: string[] | null
   } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [localGuides, setLocalGuides] = useState<Array<{ axis: 'h' | 'v'; value: number }>>([])
@@ -83,6 +85,8 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
       startMX: e.clientX,
       startMY: e.clientY,
       origPositions,
+      isAltDuplicate: e.altKey,
+      duplicateIds: null,
     }
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }, [item.id, selectedIds])
@@ -94,6 +98,30 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
 
     if (!isDragging && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
       setIsDragging(true)
+      // Alt+drag: spawn clones, move those instead
+      if (dragState.current.isAltDuplicate && !dragState.current.duplicateIds) {
+        const ids: string[] = []
+        const storeItems = useStore.getState().items
+        for (const { id } of dragState.current.origPositions) {
+          const orig = storeItems[id]
+          if (!orig) continue
+          const clone = useStore.getState().createItem({
+            boardId: orig.boardId,
+            type: orig.type,
+            x: orig.x + 20, y: orig.y + 20,
+            w: orig.w, h: orig.h,
+            content: JSON.parse(JSON.stringify(orig.content ?? {})),
+          })
+          ids.push(clone.id)
+        }
+        dragState.current.duplicateIds = ids
+        // Switch drag to move the clones
+        const newPositions = ids.map((id, i) => {
+          const orig = dragState.current!.origPositions[i]
+          return { id, x: orig.x + 20, y: orig.y + 20 }
+        })
+        dragState.current.origPositions = newPositions
+      }
     }
     if (!isDragging && Math.abs(dx) < 2 && Math.abs(dy) < 2) return
 
