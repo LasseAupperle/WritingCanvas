@@ -73,7 +73,9 @@ export function CardShell({
     resizeState.current = null
   }, [item])
 
-  const handleSize = Math.max(6, 8 / zoom)
+  // Hit area is always at least 20px in screen space; visual dot is smaller
+  const hitSize = Math.max(20, 20 / zoom)
+  const visualSize = Math.max(6, 8 / zoom)
 
   return (
     <div
@@ -96,20 +98,25 @@ export function CardShell({
     >
       {children}
 
-      {/* Resize handles */}
+      {/* Resize handles: large invisible hit area containing small visible dot */}
       {isSelected && Object.entries(HANDLE_CURSORS).map(([handle, cursor]) => (
         <div
           key={handle}
-          className="absolute bg-white border border-accent rounded-sm z-50"
+          className="absolute z-50 flex items-center justify-center"
           style={{
-            width: handleSize, height: handleSize,
+            width: hitSize, height: hitSize,
             cursor,
-            ...getHandlePosition(handle, handleSize),
+            ...getHandlePosition(handle, hitSize),
           }}
           onPointerDown={(e) => onResizeDown(e, handle)}
           onPointerMove={onResizeMove}
           onPointerUp={onResizeUp}
-        />
+        >
+          <div
+            className="bg-white border border-accent rounded-sm pointer-events-none"
+            style={{ width: visualSize, height: visualSize }}
+          />
+        </div>
       ))}
     </div>
   )

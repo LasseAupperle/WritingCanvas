@@ -46,12 +46,18 @@ export function Viewport() {
 
   const onWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
-    const rect = ref.current!.getBoundingClientRect()
-    const cx = e.clientX - rect.left
-    const cy = e.clientY - rect.top
-    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
-    setZoom(vp.zoom * factor, cx, cy)
-  }, [vp, setZoom])
+    if (e.ctrlKey || e.metaKey) {
+      // Pinch-to-zoom or Ctrl+scroll → zoom around cursor
+      const rect = ref.current!.getBoundingClientRect()
+      const cx = e.clientX - rect.left
+      const cy = e.clientY - rect.top
+      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
+      setZoom(vp.zoom * factor, cx, cy)
+    } else {
+      // Regular scroll → pan
+      setPan(vp.panX - e.deltaX, vp.panY - e.deltaY)
+    }
+  }, [vp, setZoom, setPan])
 
   useEffect(() => {
     const el = ref.current
