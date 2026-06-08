@@ -48,6 +48,14 @@ export function BoardView() {
     const target = e.target as HTMLElement
     const inText = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
+    // Open hotkey panel
+    if (e.key === '?' && !inText) {
+      e.preventDefault()
+      // Dispatch custom event picked up by Toolbar
+      window.dispatchEvent(new CustomEvent('canvas:open-hotkeys'))
+      return
+    }
+
     // Arm line tool
     if (e.key === 'l' || e.key === 'L') {
       if (!inText) { e.preventDefault(); setArmedTool('line') }

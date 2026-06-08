@@ -38,8 +38,10 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
   const setSelectedIds = useStore(s => s.setSelectedIds)
   const addToSelection = useStore(s => s.addToSelection)
   const updateItem = useStore(s => s.updateItem)
+  const removeItems = useStore(s => s.removeItems)
   const snapToGrid = useStore(s => s.snapToGrid)
   const smartGuides = useStore(s => s.smartGuides)
+  const setDragOverTrash = useStore(s => s.setDragOverTrash)
   const items = useStore(s => s.items)
   const allBoardItems = Object.values(items).filter(i => i.boardId === item.boardId)
 
@@ -128,8 +130,9 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
     const current = useStore.getState()
     let finalDx = dx
     let finalDy = dy
+    const freeMove = e.altKey || e.ctrlKey // modifier disables snapping
 
-    if (smartGuides && dragState.current.origPositions.length > 0) {
+    if (!freeMove && smartGuides && dragState.current.origPositions.length > 0) {
       const threshold = SNAP_THRESHOLD / zoom
       const staticItems = allBoardItems.filter(i => !dragState.current!.origPositions.find(p => p.id === i.id))
       const movingItems = dragState.current.origPositions.map(p => {
@@ -147,27 +150,48 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
     }
 
     for (const { id, x, y } of dragState.current.origPositions) {
-      const nx = snapVal(x + finalDx)
-      const ny = snapVal(y + finalDy)
+      const nx = freeMove ? x + finalDx : snapVal(x + finalDx)
+      const ny = freeMove ? y + finalDy : snapVal(y + finalDy)
       updateItem(id, { x: nx, y: ny }, false)
+    }
+
+    // Detect if pointer is over trash zone (bottom of toolbar)
+    const trashEl = document.querySelector('[data-trash-zone]')
+    if (trashEl) {
+      const r = trashEl.getBoundingClientRect()
+      const over = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+      setDragOverTrash(over)
     }
   }, [zoom, isDragging, snapToGrid, smartGuides, allBoardItems])
 
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     if (dragState.current && isDragging) {
-      const current = useStore.getState()
-      const afters = dragState.current.origPositions
-        .map(p => current.items[p.id])
-        .filter(Boolean)
-      const befores = dragState.current.origPositions
-        .map(({ id, x, y }) => ({ ...current.items[id], x, y }))
-        .filter(Boolean)
-      pushHistory({ type: 'move-multi', befores, afters })
+      // Check trash zone
+      const trashEl = document.querySelector('[data-trash-zone]')
+      const overTrash = trashEl ? (() => {
+        const r = trashEl.getBoundingClientRect()
+        return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+      })() : false
+
+      if (overTrash) {
+        const ids = dragState.current.origPositions.map(p => p.id)
+        removeItems(ids)
+      } else {
+        const current = useStore.getState()
+        const afters = dragState.current.origPositions
+          .map(p => current.items[p.id])
+          .filter(Boolean)
+        const befores = dragState.current.origPositions
+          .map(({ id, x, y }) => ({ ...current.items[id], x, y }))
+          .filter(Boolean)
+        pushHistory({ type: 'move-multi', befores, afters })
+      }
+      setDragOverTrash(false)
     }
     dragState.current = null
     setIsDragging(false)
     setLocalGuides([])
-  }, [isDragging])
+  }, [isDragging, removeItems, setDragOverTrash])
 
   // LOD: simplified or rect
   if (lod === 'rect') {

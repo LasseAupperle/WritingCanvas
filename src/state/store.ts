@@ -32,6 +32,7 @@ export interface AppState {
   unsortedOpen: boolean
   searchOpen: boolean
   inAppClipboard: Item[]
+  dragOverTrash: boolean
 
   // actions
   setBoards: (boards: Board[]) => void
@@ -59,6 +60,7 @@ export interface AppState {
   setUnsortedOpen: (v: boolean) => void
   setSearchOpen: (v: boolean) => void
   setInAppClipboard: (items: Item[]) => void
+  setDragOverTrash: (v: boolean) => void
 
   undo: () => void
   redo: () => void
@@ -81,6 +83,7 @@ export const useStore = create<AppState>((set, get) => ({
   unsortedOpen: false,
   searchOpen: false,
   inAppClipboard: [],
+  dragOverTrash: false,
 
   setBoards: (boards) =>
     set({ boards: Object.fromEntries(boards.map(b => [b.id, b])) }),
@@ -189,6 +192,7 @@ export const useStore = create<AppState>((set, get) => ({
   setUnsortedOpen: (v) => set({ unsortedOpen: v }),
   setSearchOpen: (v) => set({ searchOpen: v }),
   setInAppClipboard: (items) => set({ inAppClipboard: items }),
+  setDragOverTrash: (v) => set({ dragOverTrash: v }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   undo: () => undoHistory(get as any, set as any),
