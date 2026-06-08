@@ -29,6 +29,49 @@ After the first deploy, every `git push` to `main` automatically triggers a new 
 - Publish directory: `dist`
 - Node version: 20
 
+## Install as a desktop app (PWA)
+
+Canvas is an installable Progressive Web App — no `.exe` download needed.
+
+### Supported browsers
+
+| Browser | PWA install | Notes |
+|---|---|---|
+| **Chrome** | ✅ Full support | Best experience |
+| **Edge** | ✅ Full support | Same engine as Chrome |
+| **Brave** | ✅ Full support | Chromium-based |
+| **Opera** | ✅ Full support | Chromium-based |
+| **Safari (macOS 14+)** | ✅ Supported | Use "Add to Dock" from File menu |
+| **Firefox** | ❌ Not supported | Mozilla has no plans to support PWA install |
+| **Firefox (Android)** | ❌ Not supported | Same |
+
+> **Short version:** any Chromium-based browser works. Firefox does not support PWA installation.
+
+### How to install (Chrome / Edge)
+
+1. Open the hosted app in Chrome or Edge
+2. Look for the **install icon** (⊕) in the address bar — far right side
+3. Click it → **Install**
+4. The app opens in its own window with no browser UI, like a native app
+
+**Alternative:** click the browser menu (⋮) → **Cast, save and share** → **Install page as app**
+
+### How to install (Edge specifically)
+
+1. Click the **…** menu → **Apps** → **Install this site as an app**
+2. Give it a name → **Install**
+
+### After installing
+
+- App appears in your Start Menu / taskbar / dock like any other app
+- Opens offline — all data is already stored locally in IndexedDB
+- Updates automatically in the background when you push a new version
+
+### Uninstall
+
+- **Chrome/Edge:** open the app window → menu (⋮) → **Uninstall**
+- Or: `chrome://apps` → right-click Canvas → Remove
+
 ## Codebase map
 
 - **`src/db/`** — Dexie schema (`db.ts`) and all read/write helpers (`persistence.ts`). Two tables: `boards` and `items`. Blobs stored separately.
