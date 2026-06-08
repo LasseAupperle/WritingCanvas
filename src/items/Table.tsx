@@ -38,6 +38,9 @@ export function TableCard({ item, isSelected, onPointerDown, onPointerMove, onPo
   const delRow = (i: number) => {
     update(cols, rows.filter((_, idx) => idx !== i))
   }
+  const delCol = (i: number) => {
+    update(cols.filter((_, idx) => idx !== i), rows.map(r => r.filter((_, idx) => idx !== i)))
+  }
 
   return (
     <CardShell
@@ -46,21 +49,37 @@ export function TableCard({ item, isSelected, onPointerDown, onPointerMove, onPo
       zoom={zoom} minW={200} minH={100}
       className="overflow-auto"
     >
-      <div onPointerDown={e => e.stopPropagation()} className="p-1">
+      <div className="p-1">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
               {cols.map((col, ci) => (
-                <th key={ci} className="border border-card-border p-1">
-                  <input
-                    className="w-full font-semibold bg-transparent outline-none text-text-primary"
-                    value={col}
-                    onChange={e => setCol(ci, e.target.value)}
-                  />
+                <th key={ci} className="border border-card-border p-1 group/col">
+                  <div className="flex items-center gap-0.5">
+                    <input
+                      className="w-full font-semibold bg-transparent outline-none text-text-primary min-w-0"
+                      value={col}
+                      onChange={e => setCol(ci, e.target.value)}
+                      onPointerDown={e => e.stopPropagation()}
+                    />
+                    {cols.length > 1 && (
+                      <button
+                        onClick={() => delCol(ci)}
+                        onPointerDown={e => e.stopPropagation()}
+                        className="opacity-0 group-hover/col:opacity-100 text-text-muted hover:text-red-500 flex-shrink-0"
+                      >
+                        <Trash2Icon size={10} />
+                      </button>
+                    )}
+                  </div>
                 </th>
               ))}
               <th className="w-6">
-                <button onClick={addCol} className="text-text-muted hover:text-text-primary">
+                <button
+                  onClick={addCol}
+                  onPointerDown={e => e.stopPropagation()}
+                  className="text-text-muted hover:text-text-primary"
+                >
                   <PlusIcon size={12} />
                 </button>
               </th>
@@ -75,11 +94,16 @@ export function TableCard({ item, isSelected, onPointerDown, onPointerMove, onPo
                       className="w-full bg-transparent outline-none text-text-primary"
                       value={row[ci] ?? ''}
                       onChange={e => setCell(ri, ci, e.target.value)}
+                      onPointerDown={e => e.stopPropagation()}
                     />
                   </td>
                 ))}
                 <td className="w-6 opacity-0 group-hover:opacity-100">
-                  <button onClick={() => delRow(ri)} className="text-text-muted hover:text-red-500">
+                  <button
+                    onClick={() => delRow(ri)}
+                    onPointerDown={e => e.stopPropagation()}
+                    className="text-text-muted hover:text-red-500"
+                  >
                     <Trash2Icon size={12} />
                   </button>
                 </td>
@@ -89,6 +113,7 @@ export function TableCard({ item, isSelected, onPointerDown, onPointerMove, onPo
         </table>
         <button
           onClick={addRow}
+          onPointerDown={e => e.stopPropagation()}
           className="mt-1 text-xs text-text-muted hover:text-text-primary flex items-center gap-1"
         >
           <PlusIcon size={12} /> Add row

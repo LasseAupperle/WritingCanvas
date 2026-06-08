@@ -48,11 +48,14 @@ export function ImageCard({ item, isSelected, onPointerDown, onPointerMove, onPo
       zoom={zoom} minW={80} minH={60}
       className="overflow-hidden flex flex-col"
     >
-      <div className="flex-1 relative" onPointerDown={e => e.stopPropagation()}>
+      <div className="flex-1 relative" onPointerDown={e => { if (src) e.stopPropagation() }}>
         {src ? (
           <img src={src} className="w-full h-full object-contain" alt={content?.caption ?? ''} />
         ) : (
-          <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-text-muted hover:bg-gray-50">
+          <label
+            className="w-full h-full flex flex-col items-center justify-center cursor-pointer text-text-muted hover:bg-gray-50"
+            onPointerDown={e => e.stopPropagation()}
+          >
             <ImageIcon size={24} />
             <span className="text-xs mt-1">Click to add image</span>
             <input type="file" accept="image/*" className="hidden" onChange={onFile} />

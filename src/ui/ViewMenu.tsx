@@ -32,7 +32,7 @@ export function ViewMenu() {
       {open && (
         <div className="absolute right-0 top-full mt-1 bg-white border border-card-border rounded shadow-lg z-50 w-48 py-1">
           <Toggle label="Smart guides" value={smartGuides} onChange={setSmartGuides} />
-          <Toggle label="Snap to grid" value={snapToGrid} onChange={setSnapToGrid} />
+          <Toggle label="Snap to grid" value={snapToGrid} onChange={v => { setSnapToGrid(v); if (v) setShowGrid(true) }} />
           <Toggle label="Grid overlay" value={showGrid} onChange={setShowGrid} />
         </div>
       )}

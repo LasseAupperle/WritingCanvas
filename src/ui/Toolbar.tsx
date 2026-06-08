@@ -7,6 +7,8 @@ import { useStore, type ArmedTool } from '../state/store'
 import { TOOLBAR_WIDTH, TOPBAR_HEIGHT } from '../lib/constants'
 import { Tooltip, ToolTooltipContent } from './Tooltip'
 import { HotkeyPanel } from './HotkeyPanel'
+import { saveBlob } from '../db/persistence'
+import { newId } from '../lib/ids'
 import type { ItemType } from '../db/db'
 
 interface ToolDef {
@@ -112,8 +114,56 @@ export function Toolbar() {
     return () => window.removeEventListener('canvas:open-hotkeys', handler)
   }, [])
 
+  const placeAtCenter = (type: ItemType, extra?: Record<string, unknown>) => {
+    const { currentBoardId, boards, createItem } = useStore.getState()
+    const vp = boards[currentBoardId]?.viewport ?? { panX: 0, panY: 0, zoom: 1 }
+    const vpW = window.innerWidth - TOOLBAR_WIDTH
+    const vpH = window.innerHeight - TOPBAR_HEIGHT
+    const defaults: Record<string, { w: number; h: number }> = {
+      image: { w: 240, h: 180 },
+      file: { w: 220, h: 60 },
+    }
+    const { w, h } = defaults[type] ?? { w: 240, h: 120 }
+    const wx = Math.round((-vp.panX + vpW / 2) / vp.zoom - w / 2)
+    const wy = Math.round((-vp.panY + vpH / 2) / vp.zoom - h / 2)
+    createItem({ boardId: currentBoardId, type, x: wx, y: wy, w, h, content: extra ?? {} })
+  }
+
   const arm = (type: string) => {
     if (type === 'draw') return
+
+    if (type === 'image') {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = async () => {
+        const file = input.files?.[0]
+        if (!file) return
+        const key = newId()
+        await saveBlob(key, file)
+        const dataUrl = await new Promise<string>(resolve => {
+          const r = new FileReader(); r.onload = () => resolve(r.result as string); r.readAsDataURL(file)
+        })
+        placeAtCenter('image', { blobKey: key, dataUrl, caption: '' })
+      }
+      input.click()
+      return
+    }
+
+    if (type === 'file') {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.onchange = async () => {
+        const file = input.files?.[0]
+        if (!file) return
+        const key = newId()
+        await saveBlob(key, file)
+        placeAtCenter('file', { blobKey: key, filename: file.name, size: file.size })
+      }
+      input.click()
+      return
+    }
+
     if (armedTool === type) setArmedTool(null)
     else setArmedTool(type as ArmedTool)
   }
@@ -130,6 +180,7 @@ export function Toolbar() {
         style={{ top: TOPBAR_HEIGHT, width: TOOLBAR_WIDTH }}
       >
         {TOOLS.map(tool => {
+          const isDisabled = tool.type === 'draw'
           const isArmed = armedTool === tool.type
           return (
             <Tooltip
@@ -140,7 +191,7 @@ export function Toolbar() {
                   name={tool.label}
                   description={tool.description}
                   shortcut={tool.shortcut}
-                  tip={tool.tip}
+                  tip={isDisabled ? 'Coming in a future update' : tool.tip}
                 />
               }
             >
@@ -148,8 +199,9 @@ export function Toolbar() {
                 icon={tool.icon}
                 label={tool.label}
                 armed={isArmed}
+                disabled={isDisabled}
                 onClick={() => arm(tool.type)}
-                onDragStart={tool.dragDisabled ? undefined : e => onDragStart(e, tool.type)}
+                onDragStart={tool.dragDisabled || isDisabled ? undefined : e => onDragStart(e, tool.type)}
               />
             </Tooltip>
           )
@@ -233,11 +285,12 @@ export function Toolbar() {
 }
 
 function ToolButton({
-  icon, label, armed, onClick, onDragStart, className,
+  icon, label, armed, disabled, onClick, onDragStart, className,
 }: {
   icon: React.ReactNode
   label: string
   armed: boolean
+  disabled?: boolean
   onClick: () => void
   onDragStart?: (e: React.DragEvent) => void
   className?: string
@@ -245,9 +298,11 @@ function ToolButton({
   return (
     <button
       className={`flex flex-col items-center gap-0.5 w-12 py-1.5 rounded-lg transition-all ${
-        armed
-          ? 'bg-accent text-white hover:bg-accent hover:text-white'
-          : `text-text-muted hover:text-text-primary hover:bg-gray-100 ${className ?? ''}`
+        disabled
+          ? 'opacity-35 cursor-not-allowed text-text-muted'
+          : armed
+            ? 'bg-accent text-white hover:bg-accent hover:text-white'
+            : `text-text-muted hover:text-text-primary hover:bg-gray-100 ${className ?? ''}`
       }`}
       onClick={onClick}
       draggable={!!onDragStart}

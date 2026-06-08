@@ -52,13 +52,12 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
       zoom={zoom} minW={120} minH={60}
       className="overflow-auto"
     >
-      <div
-        className="p-2 h-full"
-        onPointerDown={e => e.stopPropagation()}
-      >
+      {/* stopPropagation only on the editor itself — card padding remains draggable */}
+      <div className="p-2 h-full">
         <EditorContent
           editor={editor}
           className="tiptap-note h-full outline-none text-sm text-text-primary"
+          onPointerDown={e => e.stopPropagation()}
         />
       </div>
     </CardShell>

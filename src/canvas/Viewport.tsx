@@ -40,8 +40,7 @@ export function Viewport() {
 
   const snapToGridVal = (val: number) => {
     if (!snapToGrid) return val
-    const step = 8
-    return Math.round(val / step) * step
+    return Math.round(val / 32) * 32
   }
 
   const onWheel = useCallback((e: WheelEvent) => {
@@ -332,7 +331,7 @@ function CanvasDotGrid({ zoom, panX, panY }: { zoom: number; panX: number; panY:
 }
 
 function CanvasGridOverlay({ zoom, panX, panY }: { zoom: number; panX: number; panY: number }) {
-  const step = 64
+  const step = 32
   const screenStep = step * zoom
   const offsetX = ((panX % screenStep) + screenStep) % screenStep
   const offsetY = ((panY % screenStep) + screenStep) % screenStep

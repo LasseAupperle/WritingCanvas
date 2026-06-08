@@ -24,12 +24,13 @@ export function CommentCard({ item, isSelected, onPointerDown, onPointerMove, on
       className="overflow-hidden"
       style={{ background: '#FFFBEA', borderColor: '#F0E8A0' }}
     >
-      <div className="p-2 h-full" onPointerDown={e => e.stopPropagation()}>
+      <div className="p-2 h-full">
         <textarea
           className="w-full h-full text-sm text-text-primary bg-transparent border-none outline-none resize-none"
           placeholder="Comment…"
           value={content?.text ?? ''}
           onChange={e => updateItem(item.id, { content: { text: e.target.value } }, true)}
+          onPointerDown={e => e.stopPropagation()}
         />
       </div>
     </CardShell>

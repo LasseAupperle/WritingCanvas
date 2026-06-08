@@ -53,20 +53,23 @@ export function TodoCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
       zoom={zoom} minW={160} minH={80}
       className="overflow-hidden flex flex-col"
     >
-      <div onPointerDown={e => e.stopPropagation()} className="p-2 flex flex-col h-full">
+      {/* stopPropagation on each interactive element only — card padding remains draggable */}
+      <div className="p-2 flex flex-col h-full">
         <input
           className="font-semibold text-sm text-text-primary bg-transparent border-none outline-none mb-1 w-full"
           value={content?.title ?? 'To-do'}
           onChange={e => setTitle(e.target.value)}
+          onPointerDown={e => e.stopPropagation()}
           placeholder="Title"
         />
         <div className="flex-1 overflow-auto space-y-0.5">
           {tasks.map((task, idx) => (
-            <div key={task.id} className="flex items-center gap-1.5">
+            <div key={task.id} className="flex items-center gap-1.5 group">
               <input
                 type="checkbox"
                 checked={task.done}
                 onChange={() => toggleDone(task.id)}
+                onPointerDown={e => e.stopPropagation()}
                 className="flex-shrink-0 accent-accent"
               />
               <input
@@ -74,13 +77,23 @@ export function TodoCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                 value={task.text}
                 onChange={e => setText(task.id, e.target.value)}
                 onKeyDown={e => onKeyDown(e, idx)}
+                onPointerDown={e => e.stopPropagation()}
                 placeholder="Add a task…"
               />
+              <button
+                className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-500 flex-shrink-0 text-xs leading-none"
+                onClick={() => setTasks(tasks.filter(t => t.id !== task.id))}
+                onPointerDown={e => e.stopPropagation()}
+                title="Remove task"
+              >
+                ✕
+              </button>
             </div>
           ))}
           <button
             className="text-xs text-text-muted hover:text-text-primary mt-1"
             onClick={addTask}
+            onPointerDown={e => e.stopPropagation()}
           >
             + Add a task
           </button>

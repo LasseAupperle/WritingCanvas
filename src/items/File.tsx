@@ -47,7 +47,7 @@ export function FileCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
       zoom={zoom} minW={140} minH={50}
       className="overflow-hidden"
     >
-      <div className="p-2 flex items-center gap-2 h-full" onPointerDown={e => e.stopPropagation()}>
+      <div className="p-2 flex items-center gap-2 h-full" onPointerDown={e => { if (content?.filename) e.stopPropagation() }}>
         {content?.filename ? (
           <>
             <FileIcon size={20} className="text-text-muted flex-shrink-0" />

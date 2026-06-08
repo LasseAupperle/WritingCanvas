@@ -59,7 +59,7 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
 
   const snapVal = (v: number) => {
     if (!snapToGrid) return v
-    return Math.round(v / 8) * 8
+    return Math.round(v / 32) * 32
   }
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {

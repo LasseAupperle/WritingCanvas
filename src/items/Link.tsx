@@ -36,7 +36,7 @@ export function LinkCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
       zoom={zoom} minW={160} minH={60}
       className="overflow-hidden flex flex-col"
     >
-      <div onPointerDown={e => e.stopPropagation()} className="p-2 flex flex-col gap-1 h-full">
+      <div className="p-2 flex flex-col gap-1 h-full">
         {editing || !content?.url ? (
           <input
             autoFocus
@@ -45,6 +45,7 @@ export function LinkCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
             defaultValue={content?.url}
             onBlur={e => { setUrl(e.target.value); setEditing(false) }}
             onKeyDown={e => { if (e.key === 'Enter') { setUrl((e.target as HTMLInputElement).value); setEditing(false) } }}
+            onPointerDown={e => e.stopPropagation()}
           />
         ) : (
           <>
@@ -68,6 +69,7 @@ export function LinkCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
             <button
               className="text-xs text-text-muted hover:text-text-primary self-start"
               onClick={() => setEditing(true)}
+              onPointerDown={e => e.stopPropagation()}
             >
               Edit URL
             </button>
