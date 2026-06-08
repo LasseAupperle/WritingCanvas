@@ -2,7 +2,7 @@
 
 A local-first Milanote-style visual board app. Infinite, pannable, zoomable canvas with nested boards, rich text notes, todos, images, tables, connectors, and more. All data lives in IndexedDB — no accounts, no server. Installable as a PWA.
 
-## Run
+## Run locally
 
 ```bash
 npm install
@@ -10,6 +10,24 @@ npm run dev
 ```
 
 Opens at `http://localhost:5173`.
+
+## Deploy to Netlify
+
+The repo is pre-configured for Netlify (`netlify.toml` sets build command and SPA redirects).
+
+**One-time setup:**
+1. Go to [app.netlify.com](https://app.netlify.com) and log in
+2. Click **Add new site → Import an existing project**
+3. Choose **GitHub** and select `LasseAupperle/WritingCanvas`
+4. Build settings are auto-detected from `netlify.toml` — no changes needed
+5. Click **Deploy site**
+
+After the first deploy, every `git push` to `main` automatically triggers a new deploy.
+
+**Build details:**
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Node version: 20
 
 ## Codebase map
 

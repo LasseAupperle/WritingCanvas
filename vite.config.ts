@@ -29,4 +29,20 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'tiptap-vendor': [
+            '@tiptap/react', '@tiptap/starter-kit',
+            '@tiptap/extension-underline', '@tiptap/extension-link',
+            '@tiptap/extension-highlight', '@tiptap/extension-text-align',
+            '@tiptap/extension-task-list', '@tiptap/extension-task-item',
+          ],
+          'db-vendor': ['dexie', 'zustand', 'nanoid'],
+        },
+      },
+    },
+  },
 })
