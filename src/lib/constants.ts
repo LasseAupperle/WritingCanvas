@@ -1,0 +1,11 @@
+export const MIN_ZOOM = 0.005
+export const MAX_ZOOM = 4
+export const DEFAULT_ZOOM = 1
+export const TOOLBAR_WIDTH = 64
+export const TOPBAR_HEIGHT = 52
+export const LOD_SIMPLIFIED = 0.2
+export const LOD_RECT_ONLY = 0.05
+export const CULL_MARGIN = 100
+export const SNAP_THRESHOLD = 6 // screen px
+export const GRID_STEP = 8 // world px
+export const DEBOUNCE_MS = 300

@@ -1,0 +1,222 @@
+import { create } from 'zustand'
+import { type Board, type Item, type ItemType } from '../db/db'
+import {
+  saveBoard, saveItem, deleteItem, deleteBoard,
+  debouncedSaveItem,
+} from '../db/persistence'
+import { newId } from '../lib/ids'
+import { DEFAULT_ZOOM } from '../lib/constants'
+import { pushHistory, undoHistory, redoHistory } from './history'
+
+export type ArmedTool = ItemType | 'line-start' | null
+
+export interface ViewportState {
+  panX: number
+  panY: number
+  zoom: number
+}
+
+export interface AppState {
+  // data
+  boards: Record<string, Board>
+  items: Record<string, Item>
+
+  // ui
+  currentBoardId: string
+  selectedIds: Set<string>
+  armedTool: ArmedTool
+  lineDrawState: null | { x1: number; y1: number }
+  snapToGrid: boolean
+  showGrid: boolean
+  smartGuides: boolean
+  unsortedOpen: boolean
+  searchOpen: boolean
+  inAppClipboard: Item[]
+
+  // actions
+  setBoards: (boards: Board[]) => void
+  setItems: (items: Item[]) => void
+  setCurrentBoard: (id: string) => void
+  setSelectedIds: (ids: Set<string>) => void
+  addToSelection: (id: string) => void
+  clearSelection: () => void
+
+  createItem: (partial: Omit<Item, 'id' | 'createdAt' | 'updatedAt' | 'z'> & { z?: number }) => Item
+  updateItem: (id: string, patch: Partial<Item>, debounce?: boolean) => void
+  removeItem: (id: string) => void
+  removeItems: (ids: string[]) => void
+
+  createBoard: (partial: Omit<Board, 'id' | 'createdAt' | 'updatedAt'>) => Board
+  updateBoard: (id: string, patch: Partial<Board>) => void
+  removeBoard: (id: string) => void
+
+  setViewport: (boardId: string, vp: ViewportState) => void
+  setArmedTool: (tool: ArmedTool) => void
+  setLineDrawState: (state: null | { x1: number; y1: number }) => void
+  setSnapToGrid: (v: boolean) => void
+  setShowGrid: (v: boolean) => void
+  setSmartGuides: (v: boolean) => void
+  setUnsortedOpen: (v: boolean) => void
+  setSearchOpen: (v: boolean) => void
+  setInAppClipboard: (items: Item[]) => void
+
+  undo: () => void
+  redo: () => void
+
+  getBoardItems: (boardId: string) => Item[]
+  getBoardAncestors: (boardId: string) => Board[]
+  getMaxZ: (boardId: string) => number
+}
+
+export const useStore = create<AppState>((set, get) => ({
+  boards: {},
+  items: {},
+  currentBoardId: '',
+  selectedIds: new Set(),
+  armedTool: null,
+  lineDrawState: null,
+  snapToGrid: false,
+  showGrid: false,
+  smartGuides: true,
+  unsortedOpen: false,
+  searchOpen: false,
+  inAppClipboard: [],
+
+  setBoards: (boards) =>
+    set({ boards: Object.fromEntries(boards.map(b => [b.id, b])) }),
+
+  setItems: (items) =>
+    set({ items: Object.fromEntries(items.map(i => [i.id, i])) }),
+
+  setCurrentBoard: (id) => set({ currentBoardId: id, selectedIds: new Set() }),
+
+  setSelectedIds: (ids) => set({ selectedIds: ids }),
+  addToSelection: (id) => {
+    const ids = new Set(get().selectedIds)
+    ids.add(id)
+    set({ selectedIds: ids })
+  },
+  clearSelection: () => set({ selectedIds: new Set() }),
+
+  createItem: (partial) => {
+    const id = newId()
+    const now = Date.now()
+    const maxZ = get().getMaxZ(partial.boardId)
+    const item: Item = {
+      id,
+      z: maxZ + 1,
+      createdAt: now,
+      updatedAt: now,
+      ...partial,
+    } as Item
+    set(state => ({ items: { ...state.items, [id]: item } }))
+    saveItem(item)
+    pushHistory({ type: 'create', item })
+    return item
+  },
+
+  updateItem: (id, patch, debounce = false) => {
+    const existing = get().items[id]
+    if (!existing) return
+    const updated = { ...existing, ...patch, updatedAt: Date.now() }
+    set(state => ({ items: { ...state.items, [id]: updated } }))
+    if (debounce) debouncedSaveItem(updated)
+    else saveItem(updated)
+  },
+
+  removeItem: (id) => {
+    const item = get().items[id]
+    if (!item) return
+    set(state => {
+      const items = { ...state.items }
+      delete items[id]
+      return { items }
+    })
+    deleteItem(id)
+    pushHistory({ type: 'delete', item })
+  },
+
+  removeItems: (ids) => {
+    const items = ids.map(id => get().items[id]).filter(Boolean) as Item[]
+    set(state => {
+      const newItems = { ...state.items }
+      for (const id of ids) delete newItems[id]
+      return { items: newItems, selectedIds: new Set() }
+    })
+    for (const id of ids) deleteItem(id)
+    pushHistory({ type: 'delete-multi', items })
+  },
+
+  createBoard: (partial) => {
+    const id = newId()
+    const now = Date.now()
+    const board: Board = { id, createdAt: now, updatedAt: now, ...partial }
+    set(state => ({ boards: { ...state.boards, [id]: board } }))
+    saveBoard(board)
+    return board
+  },
+
+  updateBoard: (id, patch) => {
+    const existing = get().boards[id]
+    if (!existing) return
+    const updated = { ...existing, ...patch, updatedAt: Date.now() }
+    set(state => ({ boards: { ...state.boards, [id]: updated } }))
+    saveBoard(updated)
+  },
+
+  removeBoard: (id) => {
+    set(state => {
+      const boards = { ...state.boards }
+      delete boards[id]
+      return { boards }
+    })
+    deleteBoard(id)
+  },
+
+  setViewport: (boardId, vp) => {
+    const board = get().boards[boardId]
+    if (!board) return
+    const updated = { ...board, viewport: vp, updatedAt: Date.now() }
+    set(state => ({ boards: { ...state.boards, [boardId]: updated } }))
+    saveBoard(updated)
+  },
+
+  setArmedTool: (tool) => set({ armedTool: tool, lineDrawState: null }),
+  setLineDrawState: (state) => set({ lineDrawState: state }),
+  setSnapToGrid: (v) => set({ snapToGrid: v }),
+  setShowGrid: (v) => set({ showGrid: v }),
+  setSmartGuides: (v) => set({ smartGuides: v }),
+  setUnsortedOpen: (v) => set({ unsortedOpen: v }),
+  setSearchOpen: (v) => set({ searchOpen: v }),
+  setInAppClipboard: (items) => set({ inAppClipboard: items }),
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  undo: () => undoHistory(get as any, set as any),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  redo: () => redoHistory(get as any, set as any),
+
+  getBoardItems: (boardId) =>
+    Object.values(get().items).filter(i => i.boardId === boardId),
+
+  getBoardAncestors: (boardId) => {
+    const { boards } = get()
+    const path: Board[] = []
+    let current = boards[boardId]
+    while (current) {
+      path.unshift(current)
+      if (!current.parentId) break
+      current = boards[current.parentId]
+    }
+    return path
+  },
+
+  getMaxZ: (boardId) => {
+    const items = Object.values(get().items).filter(i => i.boardId === boardId)
+    return items.length ? Math.max(...items.map(i => i.z)) : 0
+  },
+}))
+
+export const getViewport = (state: AppState): ViewportState => {
+  const board = state.boards[state.currentBoardId]
+  return board?.viewport ?? { panX: 0, panY: 0, zoom: DEFAULT_ZOOM }
+}

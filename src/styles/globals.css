@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-canvas: #ECECEC;
+  --bg-canvas-dots: #D6D6D6;
+  --bg-panel: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E2E2;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --text-primary: #2B2F36;
+  --text-muted: #8A9099;
+  --accent: #2D7FF9;
+  --accent-orange: #F0552A;
+  --radius-card: 6px;
+  --toolbar-width: 64px;
+  --topbar-height: 52px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-canvas);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* TipTap editor styles */
+.tiptap-note .ProseMirror {
+  outline: none;
+  min-height: 100%;
+}
+.tiptap-note .ProseMirror p { margin: 0 0 0.25em; }
+.tiptap-note .ProseMirror h1 { font-size: 1.4em; font-weight: 700; margin: 0 0 0.2em; }
+.tiptap-note .ProseMirror h2 { font-size: 1.1em; font-weight: 600; margin: 0 0 0.2em; }
+.tiptap-note .ProseMirror ul { padding-left: 1.2em; margin: 0; }
+.tiptap-note .ProseMirror ol { padding-left: 1.2em; margin: 0; }
+.tiptap-note .ProseMirror li { margin-bottom: 0.1em; }
+.tiptap-note .ProseMirror blockquote {
+  border-left: 3px solid #E2E2E2;
+  padding-left: 0.75em;
+  margin: 0.25em 0;
+  color: var(--text-muted);
+}
+.tiptap-note .ProseMirror code {
+  background: #f0f0f0;
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+  font-size: 0.9em;
+}
+.tiptap-note .ProseMirror pre {
+  background: #f4f4f4;
+  border-radius: 4px;
+  padding: 0.5em;
+  overflow-x: auto;
+}
+.tiptap-note .ProseMirror mark { background: #fef08a; }
+.tiptap-note .ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Task list */
+.tiptap-note .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.tiptap-note .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+}
+.tiptap-note .ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  margin-top: 0.2em;
+  accent-color: var(--accent);
+}
