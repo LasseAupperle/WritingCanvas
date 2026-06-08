@@ -181,9 +181,22 @@ export function BoardView() {
       return
     }
 
-    // Zoom to fit
-    if (e.shiftKey && e.key === '!') {
-      // handled in ZoomControl via keyboard? simpler: just trigger
+    // Zoom to fit: Shift+1
+    if (e.shiftKey && e.key === '1') {
+      e.preventDefault()
+      const boardItems = Object.values(items).filter(i => i.boardId === currentBoardId && !i.content?.['unsorted'])
+      const setViewport = useStore.getState().setViewport
+      if (!boardItems.length) { setViewport(currentBoardId, { panX: 0, panY: 0, zoom: 1 }); return }
+      const minX = Math.min(...boardItems.map(i => i.x))
+      const minY = Math.min(...boardItems.map(i => i.y))
+      const maxX = Math.max(...boardItems.map(i => i.x + i.w))
+      const maxY = Math.max(...boardItems.map(i => i.y + i.h))
+      const vpW = window.innerWidth - 64
+      const vpH = window.innerHeight - 52
+      const zoom = Math.min(4, Math.max(0.005, Math.min(vpW / (maxX - minX + 80), vpH / (maxY - minY + 80))))
+      const panX = (vpW - (maxX - minX) * zoom) / 2 - minX * zoom + 40 * zoom
+      const panY = (vpH - (maxY - minY) * zoom) / 2 - minY * zoom + 40 * zoom
+      setViewport(currentBoardId, { panX, panY, zoom })
     }
   }, [selectedIds, items, currentBoardId, inAppClipboard, boards, resolvedId])
 

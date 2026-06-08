@@ -1,7 +1,8 @@
 import React from 'react'
-import { Search, Share2, Download } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Breadcrumb } from './Breadcrumb'
 import { ZoomControl } from './ZoomControl'
+import { ViewMenu } from './ViewMenu'
 import { useStore } from '../state/store'
 import { HOME_BOARD_ID } from '../lib/ids'
 import { TOPBAR_HEIGHT } from '../lib/constants'
@@ -49,6 +50,7 @@ export function TopBar() {
           <Search size={16} />
         </button>
         <ZoomControl />
+        <ViewMenu />
         <button className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100" title="Phase 2">
           Share
         </button>
