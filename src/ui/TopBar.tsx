@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Search } from 'lucide-react'
 import { Breadcrumb } from './Breadcrumb'
 import { ZoomControl } from './ZoomControl'
@@ -14,6 +14,12 @@ export function TopBar() {
   const setSearchOpen = useStore(s => s.setSearchOpen)
   const board = boards[currentBoardId]
   const isHome = currentBoardId === HOME_BOARD_ID
+  const [toast, setToast] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2000)
+  }
 
   return (
     <div
@@ -51,13 +57,27 @@ export function TopBar() {
         </button>
         <ZoomControl />
         <ViewMenu />
-        <button className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100" title="Phase 2">
+        <button
+          className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
+          title="Share (coming soon)"
+          onClick={() => showToast('Share — coming in a future update')}
+        >
           Share
         </button>
-        <button className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100" title="Phase 2">
+        <button
+          className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
+          title="Export (coming soon)"
+          onClick={() => showToast('Export — coming in a future update')}
+        >
           Export ▾
         </button>
       </div>
+
+      {toast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-4 py-2 rounded-lg z-50 shadow-lg pointer-events-none">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

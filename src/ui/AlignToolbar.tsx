@@ -69,7 +69,7 @@ export function AlignToolbar() {
   return (
     <div
       className="absolute z-40 flex items-center gap-0.5 bg-white border border-card-border rounded-lg shadow-card px-1.5 py-1"
-      style={{ bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+      style={{ bottom: 16, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'auto' }}
     >
       {actions.map((a, i) => (
         <button

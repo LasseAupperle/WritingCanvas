@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { X, Inbox } from 'lucide-react'
 import { useStore } from '../state/store'
+import { TOOLBAR_WIDTH, TOPBAR_HEIGHT } from '../lib/constants'
 
 export function UnsortedPill() {
   const unsortedOpen = useStore(s => s.unsortedOpen)
@@ -24,6 +25,7 @@ export function UnsortedPill() {
 
   return (
     <button
+      style={{ pointerEvents: 'auto' }}
       className={`absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium shadow-card border border-card-border transition-colors ${
         flash ? 'bg-accent text-white' : 'bg-white text-text-primary'
       }`}
@@ -42,6 +44,7 @@ export function UnsortedPanel() {
   const items = useStore(s => s.items)
   const updateItem = useStore(s => s.updateItem)
   const removeItem = useStore(s => s.removeItem)
+  const board = useStore(s => s.boards[s.currentBoardId])
 
   if (!unsortedOpen) return null
 
@@ -53,7 +56,12 @@ export function UnsortedPanel() {
     const item = items[id]
     if (!item) return
     const { unsorted: _, ...rest } = item.content as Record<string, unknown>
-    updateItem(id, { content: rest, x: 100, y: 100 })
+    const vp = board?.viewport ?? { panX: 0, panY: 0, zoom: 1 }
+    const vpW = window.innerWidth - TOOLBAR_WIDTH
+    const vpH = window.innerHeight - TOPBAR_HEIGHT
+    const wx = Math.round((-vp.panX + vpW / 2) / vp.zoom - item.w / 2)
+    const wy = Math.round((-vp.panY + vpH / 2) / vp.zoom - item.h / 2)
+    updateItem(id, { content: rest, x: wx, y: wy })
   }
 
   const getLabel = (item: typeof unsorted[0]) => {
@@ -66,7 +74,7 @@ export function UnsortedPanel() {
   }
 
   return (
-    <div className="absolute top-0 right-0 bottom-0 w-64 bg-white border-l border-card-border z-20 flex flex-col shadow-lg">
+    <div style={{ pointerEvents: 'auto' }} className="absolute top-0 right-0 bottom-0 w-64 bg-white border-l border-card-border z-20 flex flex-col shadow-lg">
       <div className="flex items-center justify-between px-3 py-2 border-b border-card-border">
         <span className="font-semibold text-sm text-text-primary">Unsorted ({unsorted.length})</span>
         <button onClick={() => setUnsortedOpen(false)} className="text-text-muted hover:text-text-primary">

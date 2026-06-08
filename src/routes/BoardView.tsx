@@ -266,16 +266,14 @@ export function BoardView() {
       <Toolbar />
       <Viewport />
 
-      {/* Overlay UI (not transformed) */}
+      {/* Overlay UI (not transformed) — outer div passes events through, each child re-enables its own */}
       <div
         className="absolute overflow-hidden"
         style={{ left: TOOLBAR_WIDTH, top: TOPBAR_HEIGHT, right: 0, bottom: 0, pointerEvents: 'none' }}
       >
-        <div style={{ pointerEvents: 'auto', position: 'absolute', top: 0, right: 0, left: 0, bottom: 0 }}>
-          <UnsortedPill />
-          <UnsortedPanel />
-          <AlignToolbar />
-        </div>
+        <UnsortedPill />
+        <UnsortedPanel />
+        <AlignToolbar />
       </div>
 
       <SearchOverlay />

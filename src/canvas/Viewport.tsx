@@ -23,6 +23,7 @@ export function Viewport() {
   const items = useStore(s => s.items)
   const snapToGrid = useStore(s => s.snapToGrid)
   const smartGuides = useStore(s => s.smartGuides)
+  const showGrid = useStore(s => s.showGrid)
   const boardItems = Object.values(items).filter(i => i.boardId === currentBoardId && !i.content?.['unsorted'])
 
   const ref = useRef<HTMLDivElement>(null)
@@ -277,13 +278,16 @@ export function Viewport() {
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
+      {/* Grid backgrounds — rendered here, outside World's CSS transform */}
+      {!showGrid && <CanvasDotGrid zoom={vp.zoom} panX={vp.panX} panY={vp.panY} />}
+      {showGrid && <CanvasGridOverlay zoom={vp.zoom} panX={vp.panX} panY={vp.panY} />}
+
       <World
         panX={vp.panX}
         panY={vp.panY}
         zoom={vp.zoom}
         guides={guides}
         linePreview={lineDrawState && linePreview ? { ...lineDrawState, x2: linePreview.x, y2: linePreview.y } : null}
-        onPlaceItem={placeItem}
         viewportRef={ref}
       />
       {/* Rubber band selection */}
@@ -300,5 +304,43 @@ export function Viewport() {
         />
       )}
     </div>
+  )
+}
+
+function CanvasDotGrid({ zoom, panX, panY }: { zoom: number; panX: number; panY: number }) {
+  const spacing = 24
+  const screenSpacing = spacing * zoom
+  const dotSize = Math.max(0.5, zoom * 1.5)
+  const offsetX = ((panX % screenSpacing) + screenSpacing) % screenSpacing
+  const offsetY = ((panY % screenSpacing) + screenSpacing) % screenSpacing
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `radial-gradient(circle, #D0D0D0 ${dotSize}px, transparent ${dotSize}px)`,
+        backgroundSize: `${screenSpacing}px ${screenSpacing}px`,
+        backgroundPosition: `${offsetX}px ${offsetY}px`,
+      }}
+    />
+  )
+}
+
+function CanvasGridOverlay({ zoom, panX, panY }: { zoom: number; panX: number; panY: number }) {
+  const step = 64
+  const screenStep = step * zoom
+  const offsetX = ((panX % screenStep) + screenStep) % screenStep
+  const offsetY = ((panY % screenStep) + screenStep) % screenStep
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `
+          linear-gradient(to right, rgba(0,0,0,0.07) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0,0,0,0.07) 1px, transparent 1px)
+        `,
+        backgroundSize: `${screenStep}px ${screenStep}px`,
+        backgroundPosition: `${offsetX}px ${offsetY}px`,
+      }}
+    />
   )
 }
