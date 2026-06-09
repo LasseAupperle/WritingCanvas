@@ -80,7 +80,7 @@ export function CardShell({
   return (
     <div
       data-item-id={item.id}
-      className={`absolute rounded-card bg-card-bg shadow-card border border-card-border ${className ?? ''}`}
+      className={`absolute rounded-card shadow-card border border-card-border ${className ?? ''}`}
       style={{
         left: item.x, top: item.y,
         width: item.w, height: item.h,
@@ -89,6 +89,7 @@ export function CardShell({
         outlineOffset: 1,
         cursor: 'default',
         boxSizing: 'border-box',
+        background: (item.content?.cardColor as string | undefined) || 'var(--card-bg, #FFFFFF)',
         ...style,
       }}
       onPointerDown={onPointerDown}

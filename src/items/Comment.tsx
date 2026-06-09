@@ -22,7 +22,10 @@ export function CommentCard({ item, isSelected, onPointerDown, onPointerMove, on
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       zoom={zoom} minW={120} minH={60}
       className="overflow-hidden"
-      style={{ background: '#FFFBEA', borderColor: '#F0E8A0' }}
+      style={{
+        background: (item.content?.cardColor as string | undefined) || '#FFFBEA',
+        borderColor: (item.content?.cardColor as string | undefined) ? undefined : '#F0E8A0',
+      }}
     >
       <div className="p-2 h-full">
         <textarea

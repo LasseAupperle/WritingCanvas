@@ -8,6 +8,7 @@ import { Toolbar } from '../ui/Toolbar'
 import { UnsortedPill, UnsortedPanel } from '../ui/UnsortedPanel'
 import { SearchOverlay } from '../ui/SearchOverlay'
 import { AlignToolbar } from '../ui/AlignToolbar'
+import { CardOptionsBar } from '../ui/CardOptionsBar'
 import { TOOLBAR_WIDTH, TOPBAR_HEIGHT } from '../lib/constants'
 import type { Item } from '../db/db'
 import { newId } from '../lib/ids'
@@ -270,6 +271,7 @@ export function BoardView() {
         <UnsortedPill />
         <UnsortedPanel />
         <AlignToolbar />
+        <CardOptionsBar />
       </div>
 
       <SearchOverlay />
