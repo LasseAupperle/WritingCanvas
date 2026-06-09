@@ -49,9 +49,16 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
   const allBoardItems = Object.values(items).filter(i => i.boardId === item.boardId)
 
   const isSelected = selectedIds.has(item.id)
+
+  type OrigPos = {
+    id: string; x: number; y: number
+    lineX1?: number; lineY1?: number; lineX2?: number; lineY2?: number
+    lineContent?: Record<string, unknown>
+  }
+
   const dragState = useRef<{
     startMX: number; startMY: number
-    origPositions: Array<{ id: string; x: number; y: number }>
+    origPositions: OrigPos[]
     isAltDuplicate: boolean
     duplicateIds: string[] | null
   } | null>(null)
@@ -84,10 +91,21 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
 
     const sel = useStore.getState().selectedIds
     const allSelected = Array.from(sel.has(item.id) ? sel : new Set([item.id]))
-    const origPositions = allSelected
+    const origPositions: OrigPos[] = allSelected
       .map(id => useStore.getState().items[id])
       .filter(Boolean)
-      .map(i => ({ id: i.id, x: i.x, y: i.y }))
+      .map(i => {
+        if (i.type === 'line') {
+          const lc = i.content as Record<string, unknown>
+          return {
+            id: i.id, x: i.x, y: i.y,
+            lineX1: lc.x1 as number, lineY1: lc.y1 as number,
+            lineX2: lc.x2 as number, lineY2: lc.y2 as number,
+            lineContent: { ...lc },
+          }
+        }
+        return { id: i.id, x: i.x, y: i.y }
+      })
 
     dragState.current = {
       startMX: e.clientX,
@@ -155,10 +173,29 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
       }
     }
 
-    for (const { id, x, y } of dragState.current.origPositions) {
+    for (const orig of dragState.current.origPositions) {
+      const { id, x, y } = orig
       const nx = freeMove ? x + finalDx : snapVal(x + finalDx)
       const ny = freeMove ? y + finalDy : snapVal(y + finalDy)
-      updateItem(id, { x: nx, y: ny }, false)
+      if (orig.lineX1 !== undefined) {
+        // Line item: move endpoints, not just bounding-box x/y
+        const nx1 = orig.lineX1 + finalDx
+        const ny1 = orig.lineY1! + finalDy
+        const nx2 = orig.lineX2! + finalDx
+        const ny2 = orig.lineY2! + finalDy
+        const it = current.items[id]
+        if (it) {
+          updateItem(id, {
+            content: { ...(it.content as object), x1: nx1, y1: ny1, x2: nx2, y2: ny2 },
+            x: Math.min(nx1, nx2),
+            y: Math.min(ny1, ny2),
+            w: Math.max(8, Math.abs(nx2 - nx1)),
+            h: Math.max(8, Math.abs(ny2 - ny1)),
+          }, false)
+        }
+      } else {
+        updateItem(id, { x: nx, y: ny }, false)
+      }
     }
 
     // Detect if pointer is over trash zone (bottom of toolbar)
@@ -188,9 +225,16 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
           .map(p => current.items[p.id])
           .filter(Boolean)
         const befores = dragState.current.origPositions
-          .map(({ id, x, y }) => ({ ...current.items[id], x, y }))
+          .map(orig => {
+            const it = current.items[orig.id]
+            if (!it) return null
+            if (orig.lineContent !== undefined) {
+              return { ...it, x: orig.x, y: orig.y, content: orig.lineContent }
+            }
+            return { ...it, x: orig.x, y: orig.y }
+          })
           .filter(Boolean)
-        pushHistory({ type: 'move-multi', befores, afters })
+        pushHistory({ type: 'move-multi', befores: befores as Item[], afters: afters as Item[] })
       }
       setDragOverTrash(false)
     }

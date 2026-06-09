@@ -358,7 +358,13 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
         editor={editor}
         className="tiptap-note h-full outline-none text-sm text-text-primary"
         style={{ padding: '8px', boxSizing: 'border-box' }}
-        onPointerDown={e => e.stopPropagation()}
+        onPointerDown={e => {
+          // Only block drag when clicking inside the editor text area,
+          // not on the padding around it (which should allow card drag)
+          if ((e.target as HTMLElement).closest('[contenteditable]')) {
+            e.stopPropagation()
+          }
+        }}
       />
     </CardShell>
   )

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import type { Item } from '../db/db'
 import { useStore } from '../state/store'
+import { pushHistory } from '../state/history'
 
 const PAD = 20 // world-px padding around line bounding box
 
@@ -27,7 +28,15 @@ export function LineCard({ item, isSelected, zoom }: Props) {
   const c = item.content as unknown as LineContent
   const { x1, y1, x2, y2, arrowStyle = 'end' } = c
 
-  const dragRef = useRef<{ mx: number; my: number; x1: number; y1: number; x2: number; y2: number } | null>(null)
+  type LineDragOrigin = {
+    id: string; x: number; y: number
+    lineX1?: number; lineY1?: number; lineX2?: number; lineY2?: number
+    lineContent?: Record<string, unknown>
+  }
+  const dragRef = useRef<{
+    mx: number; my: number; x1: number; y1: number; x2: number; y2: number
+    origPositions: LineDragOrigin[]
+  } | null>(null)
   const dragged = useRef(false)
   const endRef = useRef<{ endpoint: 'start' | 'end'; mx: number; my: number; ox: number; oy: number } | null>(null)
 
@@ -70,7 +79,22 @@ export function LineCard({ item, isSelected, zoom }: Props) {
     e.stopPropagation()
     if (e.shiftKey) addToSelection(item.id)
     else if (!isSelected) setSelectedIds(new Set([item.id]))
-    dragRef.current = { mx: e.clientX, my: e.clientY, x1, y1, x2, y2 }
+
+    const state = useStore.getState()
+    const sel = state.selectedIds
+    const allSelected = Array.from(sel.has(item.id) ? sel : new Set([item.id]))
+    const origPositions: LineDragOrigin[] = allSelected
+      .map(id => state.items[id])
+      .filter(Boolean)
+      .map(it => {
+        if (it.type === 'line') {
+          const lc = it.content as Record<string, unknown>
+          return { id: it.id, x: it.x, y: it.y, lineX1: lc.x1 as number, lineY1: lc.y1 as number, lineX2: lc.x2 as number, lineY2: lc.y2 as number, lineContent: { ...lc } }
+        }
+        return { id: it.id, x: it.x, y: it.y }
+      })
+
+    dragRef.current = { mx: e.clientX, my: e.clientY, x1, y1, x2, y2, origPositions }
     dragged.current = false
     ;(e.target as SVGElement).setPointerCapture(e.pointerId)
   }
@@ -81,13 +105,52 @@ export function LineCard({ item, isSelected, zoom }: Props) {
     const dy = (e.clientY - dragRef.current.my) / zoom
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragged.current = true
     if (!dragged.current) return
-    updateLine({
-      x1: dragRef.current.x1 + dx, y1: dragRef.current.y1 + dy,
-      x2: dragRef.current.x2 + dx, y2: dragRef.current.y2 + dy,
-    })
+
+    for (const orig of dragRef.current.origPositions) {
+      if (orig.lineX1 !== undefined) {
+        const nx1 = orig.lineX1 + dx
+        const ny1 = orig.lineY1! + dy
+        const nx2 = orig.lineX2! + dx
+        const ny2 = orig.lineY2! + dy
+        if (orig.id === item.id) {
+          updateLine({ x1: nx1, y1: ny1, x2: nx2, y2: ny2 })
+        } else {
+          const it = useStore.getState().items[orig.id]
+          if (it) {
+            const nc = { ...(it.content as unknown as LineContent), x1: nx1, y1: ny1, x2: nx2, y2: ny2 }
+            updateItem(orig.id, {
+              content: nc as unknown as Record<string, unknown>,
+              x: Math.min(nx1, nx2),
+              y: Math.min(ny1, ny2),
+              w: Math.max(8, Math.abs(nx2 - nx1)),
+              h: Math.max(8, Math.abs(ny2 - ny1)),
+            })
+          }
+        }
+      } else {
+        updateItem(orig.id, { x: orig.x + dx, y: orig.y + dy }, false)
+      }
+    }
   }
 
-  const onHitUp = (e: React.PointerEvent<SVGElement>) => {
+  const onHitUp = (_e: React.PointerEvent<SVGElement>) => {
+    if (dragRef.current && dragged.current) {
+      const state = useStore.getState()
+      const befores = dragRef.current.origPositions
+        .map(orig => {
+          const it = state.items[orig.id]
+          if (!it) return null
+          if (orig.lineContent !== undefined) {
+            return { ...it, x: orig.x, y: orig.y, content: orig.lineContent }
+          }
+          return { ...it, x: orig.x, y: orig.y }
+        })
+        .filter(Boolean) as Item[]
+      const afters = dragRef.current.origPositions
+        .map(orig => state.items[orig.id])
+        .filter(Boolean) as Item[]
+      if (befores.length > 0) pushHistory({ type: 'move-multi', befores, afters })
+    }
     dragRef.current = null
   }
 
