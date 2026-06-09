@@ -9,33 +9,48 @@ type HistoryEntry =
   | { type: 'update-multi'; befores: Item[]; afters: Item[] }
   | { type: 'move-multi'; befores: Item[]; afters: Item[] }
 
-const LS_KEY = 'canvas:history'
+const LS_KEY = 'canvas:history-v2'
 const MAX_ENTRIES = 50
-const MAX_BYTES = 512 * 1024 // 512 KB cap before giving up on persist
+const MAX_BYTES = 512 * 1024
 
-let undoStack: HistoryEntry[] = []
-let redoStack: HistoryEntry[] = []
+const undoStacks = new Map<string, HistoryEntry[]>()
+const redoStacks = new Map<string, HistoryEntry[]>()
+
+function getUndoStack(boardId: string): HistoryEntry[] {
+  if (!undoStacks.has(boardId)) undoStacks.set(boardId, [])
+  return undoStacks.get(boardId)!
+}
+
+function getRedoStack(boardId: string): HistoryEntry[] {
+  if (!redoStacks.has(boardId)) redoStacks.set(boardId, [])
+  return redoStacks.get(boardId)!
+}
 
 // Load persisted history on module init
 try {
   const raw = localStorage.getItem(LS_KEY)
   if (raw) {
-    const parsed = JSON.parse(raw) as { undo: HistoryEntry[]; redo: HistoryEntry[] }
-    undoStack = parsed.undo ?? []
-    redoStack = parsed.redo ?? []
+    const parsed = JSON.parse(raw) as Record<string, { undo: HistoryEntry[]; redo: HistoryEntry[] }>
+    for (const [boardId, stacks] of Object.entries(parsed)) {
+      if (Array.isArray(stacks.undo)) undoStacks.set(boardId, stacks.undo)
+      if (Array.isArray(stacks.redo)) redoStacks.set(boardId, stacks.redo)
+    }
   }
 } catch {
   // corrupt or missing — start fresh
 }
 
-let notifyFn: ((undo: number, redo: number) => void) | null = null
+let notifyFn: ((boardId: string, undo: number, redo: number) => void) | null = null
 
-export function registerHistoryNotify(fn: (undo: number, redo: number) => void) {
+export function registerHistoryNotify(fn: (boardId: string, undo: number, redo: number) => void) {
   notifyFn = fn
 }
 
-export function getHistoryCounts() {
-  return { undo: undoStack.length, redo: redoStack.length }
+export function getHistoryCounts(boardId: string) {
+  return {
+    undo: undoStacks.get(boardId)?.length ?? 0,
+    redo: redoStacks.get(boardId)?.length ?? 0,
+  }
 }
 
 function hasLargeContent(item: Item) {
@@ -59,13 +74,19 @@ function isEntryStorable(entry: HistoryEntry): boolean {
 
 function persist() {
   try {
-    const storableUndo = undoStack.filter(isEntryStorable).slice(-MAX_ENTRIES)
-    const storableRedo = redoStack.filter(isEntryStorable).slice(-MAX_ENTRIES)
-    const json = JSON.stringify({ undo: storableUndo, redo: storableRedo })
+    const data: Record<string, { undo: HistoryEntry[]; redo: HistoryEntry[] }> = {}
+    const allBoardIds = new Set([...undoStacks.keys(), ...redoStacks.keys()])
+    for (const boardId of allBoardIds) {
+      const undo = (undoStacks.get(boardId) ?? []).filter(isEntryStorable).slice(-MAX_ENTRIES)
+      const redo = (redoStacks.get(boardId) ?? []).filter(isEntryStorable).slice(-MAX_ENTRIES)
+      if (undo.length > 0 || redo.length > 0) data[boardId] = { undo, redo }
+    }
+    const json = JSON.stringify(data)
     if (json.length > MAX_BYTES) {
-      // Too large — trim further
-      const trimmed = JSON.stringify({ undo: storableUndo.slice(-10), redo: storableRedo.slice(-10) })
-      localStorage.setItem(LS_KEY, trimmed)
+      for (const boardId of Object.keys(data)) {
+        data[boardId] = { undo: data[boardId].undo.slice(-10), redo: data[boardId].redo.slice(-10) }
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(data))
     } else {
       localStorage.setItem(LS_KEY, json)
     }
@@ -74,16 +95,17 @@ function persist() {
   }
 }
 
-function notify() {
-  notifyFn?.(undoStack.length, redoStack.length)
+function notify(boardId: string) {
+  notifyFn?.(boardId, getUndoStack(boardId).length, getRedoStack(boardId).length)
   persist()
 }
 
-export function pushHistory(entry: HistoryEntry) {
-  undoStack.push(entry)
-  if (undoStack.length > MAX_ENTRIES) undoStack.shift()
-  redoStack.length = 0
-  notify()
+export function pushHistory(entry: HistoryEntry, boardId: string) {
+  const stack = getUndoStack(boardId)
+  stack.push(entry)
+  if (stack.length > MAX_ENTRIES) stack.shift()
+  getRedoStack(boardId).length = 0
+  notify(boardId)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,7 +132,9 @@ function removeItems(ids: string[], set: SetFn) {
   for (const id of ids) deleteItem(id)
 }
 
-export function undoHistory(get: GetFn, set: SetFn) {
+export function undoHistory(boardId: string, get: GetFn, set: SetFn) {
+  const undoStack = getUndoStack(boardId)
+  const redoStack = getRedoStack(boardId)
   const entry = undoStack.pop()
   if (!entry) return
   redoStack.push(entry)
@@ -129,7 +153,9 @@ export function undoHistory(get: GetFn, set: SetFn) {
   // notify called by store after this returns
 }
 
-export function redoHistory(get: GetFn, set: SetFn) {
+export function redoHistory(boardId: string, get: GetFn, set: SetFn) {
+  const undoStack = getUndoStack(boardId)
+  const redoStack = getRedoStack(boardId)
   const entry = redoStack.pop()
   if (!entry) return
   undoStack.push(entry)

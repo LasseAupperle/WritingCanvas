@@ -87,8 +87,8 @@ export const useStore = create<AppState>((set, get) => ({
   searchOpen: false,
   inAppClipboard: [],
   dragOverTrash: false,
-  undoCount: getHistoryCounts().undo,
-  redoCount: getHistoryCounts().redo,
+  undoCount: 0,
+  redoCount: 0,
 
   setHistoryCounts: (undo, redo) => set({ undoCount: undo, redoCount: redo }),
 
@@ -98,7 +98,10 @@ export const useStore = create<AppState>((set, get) => ({
   setItems: (items) =>
     set({ items: Object.fromEntries(items.map(i => [i.id, i])) }),
 
-  setCurrentBoard: (id) => set({ currentBoardId: id, selectedIds: new Set() }),
+  setCurrentBoard: (id) => {
+    const counts = getHistoryCounts(id)
+    set({ currentBoardId: id, selectedIds: new Set(), undoCount: counts.undo, redoCount: counts.redo })
+  },
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
   addToSelection: (id) => {
@@ -121,7 +124,7 @@ export const useStore = create<AppState>((set, get) => ({
     } as Item
     set(state => ({ items: { ...state.items, [id]: item } }))
     saveItem(item)
-    pushHistory({ type: 'create', item })
+    pushHistory({ type: 'create', item }, item.boardId)
     return item
   },
 
@@ -147,7 +150,7 @@ export const useStore = create<AppState>((set, get) => ({
     })
     deleteItem(id)
     if (item.type === 'board' && item.childBoardId) deleteBoard(item.childBoardId)
-    pushHistory({ type: 'delete', item })
+    pushHistory({ type: 'delete', item }, item.boardId)
   },
 
   removeItems: (ids) => {
@@ -164,7 +167,7 @@ export const useStore = create<AppState>((set, get) => ({
     })
     for (const id of ids) deleteItem(id)
     for (const boardId of boardChildIds) deleteBoard(boardId)
-    pushHistory({ type: 'delete-multi', items })
+    if (items.length > 0) pushHistory({ type: 'delete-multi', items }, items[0].boardId)
   },
 
   createBoard: (partial) => {
@@ -212,15 +215,17 @@ export const useStore = create<AppState>((set, get) => ({
   setDragOverTrash: (v) => set({ dragOverTrash: v }),
 
   undo: () => {
+    const { currentBoardId } = get()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    undoHistory(get as any, set as any)
-    const counts = getHistoryCounts()
+    undoHistory(currentBoardId, get as any, set as any)
+    const counts = getHistoryCounts(currentBoardId)
     set({ undoCount: counts.undo, redoCount: counts.redo })
   },
   redo: () => {
+    const { currentBoardId } = get()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    redoHistory(get as any, set as any)
-    const counts = getHistoryCounts()
+    redoHistory(currentBoardId, get as any, set as any)
+    const counts = getHistoryCounts(currentBoardId)
     set({ undoCount: counts.undo, redoCount: counts.redo })
   },
 
@@ -246,8 +251,10 @@ export const useStore = create<AppState>((set, get) => ({
 }))
 
 // Keep undoCount/redoCount in sync whenever pushHistory is called from outside store actions
-registerHistoryNotify((undo, redo) => {
-  useStore.getState().setHistoryCounts(undo, redo)
+registerHistoryNotify((boardId, undo, redo) => {
+  if (boardId === useStore.getState().currentBoardId) {
+    useStore.getState().setHistoryCounts(undo, redo)
+  }
 })
 
 export const getViewport = (state: AppState): ViewportState => {

@@ -149,7 +149,7 @@ export function LineCard({ item, isSelected, zoom }: Props) {
       const afters = dragRef.current.origPositions
         .map(orig => state.items[orig.id])
         .filter(Boolean) as Item[]
-      if (befores.length > 0) pushHistory({ type: 'move-multi', befores, afters })
+      if (befores.length > 0) pushHistory({ type: 'move-multi', befores, afters }, item.boardId)
     }
     dragRef.current = null
   }

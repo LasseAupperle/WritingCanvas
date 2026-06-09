@@ -234,7 +234,7 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
             return { ...it, x: orig.x, y: orig.y }
           })
           .filter(Boolean)
-        pushHistory({ type: 'move-multi', befores: befores as Item[], afters: afters as Item[] })
+        pushHistory({ type: 'move-multi', befores: befores as Item[], afters: afters as Item[] }, item.boardId)
       }
       setDragOverTrash(false)
     }

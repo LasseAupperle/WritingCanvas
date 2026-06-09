@@ -68,7 +68,7 @@ export function CardShell({
   const onResizeUp = useCallback((e: React.PointerEvent) => {
     if (resizeState.current) {
       const after = { ...item }
-      pushHistory({ type: 'update', before: resizeState.current.before, after })
+      pushHistory({ type: 'update', before: resizeState.current.before, after }, item.boardId)
     }
     resizeState.current = null
   }, [item])

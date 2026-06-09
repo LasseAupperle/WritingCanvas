@@ -112,7 +112,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
     onBlur: ({ editor }) => {
       const html = editor.getHTML()
       updateItem(item.id, { content: { ...item.content, html } }, true)
-      pushHistory({ type: 'update', before: before.current, after: { ...item, content: { ...item.content, html } } })
+      pushHistory({ type: 'update', before: before.current, after: { ...item, content: { ...item.content, html } } }, item.boardId)
     },
   })
 
