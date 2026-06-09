@@ -110,7 +110,7 @@ export function Viewport() {
       const wp = screenToWorld(sx, sy, vp.panX, vp.panY, vp.zoom)
       if (!lineDrawState) {
         setLineDrawState({ x1: wp.x, y1: wp.y })
-        setArmedTool('line-start' as never)
+        setArmedTool('line-start')
         setLinePreview({ x: wp.x, y: wp.y })
       } else {
         const x1 = lineDrawState.x1
@@ -214,7 +214,7 @@ export function Viewport() {
     } else {
       createItem({
         boardId: currentBoardId,
-        type: type as never,
+        type: type as import('../db/db').ItemType,
         x: wx, y: wy,
         w: d.w, h: d.h,
         content: d.content ?? {},

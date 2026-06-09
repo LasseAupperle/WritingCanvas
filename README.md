@@ -95,7 +95,7 @@ Canvas is an installable Progressive Web App — no `.exe` download needed.
 | **Table** | Editable grid. Hover column header to delete a column; hover row to delete a row. |
 | **Image** | Clicking opens a file picker; the image is placed at viewport center. |
 | **Upload** | Same as Image but accepts any file type. Click the card to download. |
-| **Draw** | Coming in a future update. |
+| **Draw** | Freehand drawing canvas. A toolbar appears with color palette, stroke size, eraser, and clear. Click Done or click away to save. Double-click to re-edit. |
 
 ## View menu
 
@@ -120,6 +120,20 @@ Canvas is an installable Progressive Web App — no `.exe` download needed.
 | `Shift+1` | Zoom to fit all items |
 | `Ctrl+U` | Navigate to parent board |
 
+## Export and Import
+
+Boards can be saved as `.canvas` files and shared or moved between devices.
+
+**Export:**
+1. Click **Export** in the top bar
+2. Choose _Export this board_ (current board only) or _Export with sub-boards_ (includes all nested boards)
+3. A `.canvas` file is downloaded — this is a JSON file containing all items and embedded images
+
+**Import:**
+1. Click **Import** in the top bar
+2. Select a `.canvas` file
+3. The board is added to your current board as a new Board card you can double-click to navigate into
+
 ## Codebase map
 
 - **`src/db/`** — Dexie schema (`db.ts`) and all read/write helpers (`persistence.ts`). Two tables: `boards` and `items`. Blobs stored separately in IndexedDB.
@@ -128,4 +142,4 @@ Canvas is an installable Progressive Web App — no `.exe` download needed.
 - **`src/items/`** — One file per item type. `ItemRenderer.tsx` switches on `item.type`, applies LOD, and handles drag-to-move + Alt-drag-duplicate. `CardShell.tsx` provides the shared card wrapper with 8-handle resize.
 - **`src/ui/`** — `TopBar.tsx`, `Toolbar.tsx` (click-to-place + drag-out), `Breadcrumb.tsx`, `ZoomControl.tsx`, `UnsortedPanel.tsx` (inbox for pasted items), `SearchOverlay.tsx` (full-workspace search), `AlignToolbar.tsx` (multi-select align/distribute), `HotkeyPanel.tsx` (rebindable shortcuts).
 - **`src/routes/BoardView.tsx`** — Main route, wires up keyboard shortcuts, external-paste → Unsorted inbox, and overall layout.
-- **`src/lib/`** — `constants.ts` (MIN_ZOOM, MAX_ZOOM, …), `coords.ts` (screen↔world math), `ids.ts` (nanoid + HOME_BOARD_ID), `hotkeys.ts` (rebindable hotkey definitions).
+- **`src/lib/`** — `constants.ts` (MIN_ZOOM, MAX_ZOOM, GRID_STEP, …), `coords.ts` (screen↔world math), `ids.ts` (nanoid + HOME_BOARD_ID), `hotkeys.ts` (rebindable hotkey definitions), `exportImport.ts` (board export/import logic).

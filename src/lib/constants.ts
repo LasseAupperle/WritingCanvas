@@ -7,5 +7,5 @@ export const LOD_SIMPLIFIED = 0.2
 export const LOD_RECT_ONLY = 0.05
 export const CULL_MARGIN = 100
 export const SNAP_THRESHOLD = 6 // screen px
-export const GRID_STEP = 8 // world px
+export const GRID_STEP = 32 // world px
 export const DEBOUNCE_MS = 300
