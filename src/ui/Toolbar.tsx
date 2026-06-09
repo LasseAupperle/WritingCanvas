@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  FileText, Link, CheckSquare, Minus, Layout, Columns,
+  FileText, CheckSquare, Minus, Layout, Columns,
   MessageSquare, Table, ImageIcon, Upload, Trash2, PenTool, Keyboard,
 } from 'lucide-react'
 import { useStore, type ArmedTool } from '../state/store'
@@ -28,12 +28,6 @@ const TOOLS: ToolDef[] = [
     label: 'Note',
     description: 'Rich text card. Supports headings, lists, bold, italic, links, checkboxes and more.',
     tip: 'Tip: Double-click empty canvas to create a note instantly',
-  },
-  {
-    type: 'link',
-    icon: <Link size={18} />,
-    label: 'Link',
-    description: 'Paste a URL to save as a clickable link card with favicon and domain.',
   },
   {
     type: 'todo',

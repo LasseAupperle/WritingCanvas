@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useRef, useState } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -9,6 +9,7 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
+import { Link as LinkIcon, ExternalLink, Unlink } from 'lucide-react'
 import { type Item } from '../db/db'
 import { useStore } from '../state/store'
 import { CardShell } from './CardShell'
@@ -37,13 +38,17 @@ const BUBBLE_COLORS = [
 export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPointerUp, zoom }: Props) {
   const updateItem = useStore(s => s.updateItem)
   const content = item.content as { html: string } | undefined
-  const before = React.useRef<Item>({ ...item })
+  const before = useRef<Item>({ ...item })
+
+  const [linkInput, setLinkInput] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+  const storedSelection = useRef<{ from: number; to: number } | null>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
       Highlight,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TaskList,
@@ -60,6 +65,30 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
     },
   })
 
+  const openLinkInput = () => {
+    if (!editor) return
+    storedSelection.current = { from: editor.state.selection.from, to: editor.state.selection.to }
+    setLinkUrl(editor.isActive('link') ? editor.getAttributes('link').href ?? '' : '')
+    setLinkInput(true)
+  }
+
+  const applyLink = () => {
+    if (!editor) return
+    const href = linkUrl.trim()
+    if (!href) { setLinkInput(false); editor.commands.focus(); return }
+    const normalised = /^https?:\/\//.test(href) ? href : `https://${href}`
+    const { from, to } = storedSelection.current ?? { from: editor.state.selection.from, to: editor.state.selection.to }
+    editor.chain().focus().setTextSelection({ from, to }).setLink({ href: normalised }).run()
+    setLinkInput(false)
+    storedSelection.current = null
+  }
+
+  const cancelLink = () => {
+    setLinkInput(false)
+    storedSelection.current = null
+    editor?.commands.focus()
+  }
+
   return (
     <CardShell
       item={item} isSelected={isSelected}
@@ -70,6 +99,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
       {editor && (
         <BubbleMenu
           editor={editor}
+          shouldShow={linkInput ? () => true : null}
           tippyOptions={{
             duration: 100,
             appendTo: () => document.getElementById('root') ?? document.body,
@@ -77,68 +107,145 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
             popperOptions: { strategy: 'fixed' },
           }}
         >
-          <div
-            className="flex items-center gap-0.5 bg-white border border-card-border rounded-lg shadow-lg px-1.5 py-1"
-            onPointerDown={e => e.stopPropagation()}
-          >
-            <FmtBtn active={editor.isActive('bold')} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()}>
-              <strong>B</strong>
-            </FmtBtn>
-            <FmtBtn active={editor.isActive('italic')} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()}>
-              <em>I</em>
-            </FmtBtn>
-            <FmtBtn active={editor.isActive('underline')} title="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()}>
-              <u>U</u>
-            </FmtBtn>
-            <FmtBtn active={editor.isActive('strike')} title="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()}>
-              <s>S</s>
-            </FmtBtn>
-
-            <Sep />
-
-            <FmtBtn active={editor.isActive('heading', { level: 1 })} title="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-              H1
-            </FmtBtn>
-            <FmtBtn active={editor.isActive('heading', { level: 2 })} title="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-              H2
-            </FmtBtn>
-            <FmtBtn active={editor.isActive('heading', { level: 3 })} title="Heading 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
-              H3
-            </FmtBtn>
-
-            <Sep />
-
-            {BUBBLE_COLORS.map(c => (
-              <button
-                key={c.value}
-                title={c.label}
-                className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
-                style={{
-                  background: c.value,
-                  border: editor.isActive('textStyle', { color: c.value })
-                    ? '2px solid #2D7FF9'
-                    : '1px solid rgba(0,0,0,0.15)',
+          {linkInput ? (
+            // URL input view
+            <div
+              className="flex items-center gap-1 bg-white border border-card-border rounded-lg shadow-lg px-1.5 py-1"
+              onPointerDown={e => e.stopPropagation()}
+            >
+              <LinkIcon size={11} className="text-text-muted flex-shrink-0" />
+              <input
+                autoFocus
+                type="url"
+                value={linkUrl}
+                onChange={e => setLinkUrl(e.target.value)}
+                placeholder="https://..."
+                className="text-xs outline-none w-44 bg-transparent"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); applyLink() }
+                  if (e.key === 'Escape') cancelLink()
                 }}
+                onPointerDown={e => e.stopPropagation()}
+              />
+              <button
+                className="text-xs text-white bg-accent px-1.5 py-0.5 rounded hover:bg-accent/90 flex-shrink-0"
+                onMouseDown={e => { e.preventDefault(); applyLink() }}
+              >
+                Apply
+              </button>
+              <button
+                className="text-xs text-text-muted px-1 py-0.5 rounded hover:bg-gray-100 flex-shrink-0"
+                onMouseDown={e => { e.preventDefault(); cancelLink() }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            // Normal formatting toolbar
+            <div
+              className="flex items-center gap-0.5 bg-white border border-card-border rounded-lg shadow-lg px-1.5 py-1"
+              onPointerDown={e => e.stopPropagation()}
+            >
+              <FmtBtn active={editor.isActive('bold')} title="Bold" onClick={() => editor.chain().focus().toggleBold().run()}>
+                <strong>B</strong>
+              </FmtBtn>
+              <FmtBtn active={editor.isActive('italic')} title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()}>
+                <em>I</em>
+              </FmtBtn>
+              <FmtBtn active={editor.isActive('underline')} title="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()}>
+                <u>U</u>
+              </FmtBtn>
+              <FmtBtn active={editor.isActive('strike')} title="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()}>
+                <s>S</s>
+              </FmtBtn>
+
+              <Sep />
+
+              <FmtBtn active={editor.isActive('heading', { level: 1 })} title="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+                H1
+              </FmtBtn>
+              <FmtBtn active={editor.isActive('heading', { level: 2 })} title="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+                H2
+              </FmtBtn>
+              <FmtBtn active={editor.isActive('heading', { level: 3 })} title="Heading 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+                H3
+              </FmtBtn>
+
+              <Sep />
+
+              {BUBBLE_COLORS.map(c => (
+                <button
+                  key={c.value}
+                  title={c.label}
+                  className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
+                  style={{
+                    background: c.value,
+                    border: editor.isActive('textStyle', { color: c.value })
+                      ? '2px solid #2D7FF9'
+                      : '1px solid rgba(0,0,0,0.15)',
+                  }}
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    editor.chain().focus().setColor(c.value).run()
+                  }}
+                />
+              ))}
+
+              <Sep />
+
+              {/* Link controls */}
+              {editor.isActive('link') ? (
+                <>
+                  <button
+                    title="Edit link"
+                    className="p-0.5 rounded hover:bg-gray-100 text-accent"
+                    onMouseDown={e => { e.preventDefault(); openLinkInput() }}
+                  >
+                    <LinkIcon size={11} />
+                  </button>
+                  <button
+                    title="Open link"
+                    className="p-0.5 rounded hover:bg-gray-100 text-text-muted"
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      const href = editor.getAttributes('link').href
+                      if (href) window.open(href, '_blank', 'noopener,noreferrer')
+                    }}
+                  >
+                    <ExternalLink size={11} />
+                  </button>
+                  <button
+                    title="Remove link"
+                    className="p-0.5 rounded hover:bg-gray-100 text-text-muted"
+                    onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetLink().run() }}
+                  >
+                    <Unlink size={11} />
+                  </button>
+                </>
+              ) : (
+                <button
+                  title="Add link"
+                  className="p-0.5 rounded hover:bg-gray-100 text-text-muted"
+                  onMouseDown={e => { e.preventDefault(); openLinkInput() }}
+                >
+                  <LinkIcon size={11} />
+                </button>
+              )}
+
+              <Sep />
+
+              <button
+                title="Clear formatting"
+                className="text-[10px] px-1 py-0.5 rounded hover:bg-gray-100 text-text-muted leading-none"
                 onMouseDown={e => {
                   e.preventDefault()
-                  editor.chain().focus().setColor(c.value).run()
+                  editor.chain().focus().unsetAllMarks().clearNodes().run()
                 }}
-              />
-            ))}
-
-            <Sep />
-
-            <button
-              title="Clear formatting"
-              className="text-[10px] px-1 py-0.5 rounded hover:bg-gray-100 text-text-muted leading-none"
-              onMouseDown={e => {
-                e.preventDefault()
-                editor.chain().focus().unsetAllMarks().clearNodes().run()
-              }}
-            >
-              ✕
-            </button>
-          </div>
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </BubbleMenu>
       )}
 
