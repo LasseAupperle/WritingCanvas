@@ -115,15 +115,16 @@ export function Viewport() {
       } else {
         const x1 = lineDrawState.x1
         const y1 = lineDrawState.y1
-        createItem({
+        const newLine = createItem({
           boardId: currentBoardId,
           type: 'line',
           x: Math.min(x1, wp.x),
           y: Math.min(y1, wp.y),
           w: Math.abs(wp.x - x1) || 10,
           h: Math.abs(wp.y - y1) || 10,
-          content: { x1, y1, x2: wp.x, y2: wp.y, arrowEnd: true },
+          content: { x1, y1, x2: wp.x, y2: wp.y, arrowStyle: 'end' },
         })
+        setSelectedIds(new Set([newLine.id]))
         setLineDrawState(null)
         setArmedTool(null)
         setLinePreview(null)
@@ -134,7 +135,8 @@ export function Viewport() {
     // Armed tool click-to-place (non-line)
     if (armedTool && (armedTool as string) !== 'line-start') {
       const wp = screenToWorld(sx, sy, vp.panX, vp.panY, vp.zoom)
-      placeItem(armedTool as string, snapToGridVal(wp.x), snapToGridVal(wp.y))
+      const placed = placeItem(armedTool as string, snapToGridVal(wp.x), snapToGridVal(wp.y))
+      if (placed) setSelectedIds(new Set([placed.id]))
       setArmedTool(null)
       return
     }
@@ -144,6 +146,8 @@ export function Viewport() {
     const isItem = target.closest('[data-item-id]')
     if (!isItem) {
       clearSelection()
+      // Blur any focused editor so hotkeys work immediately after
+      ;(document.activeElement as HTMLElement | null)?.blur()
       setRubberBand({ startX: sx, startY: sy, endX: sx, endY: sy })
       ref.current?.setPointerCapture(e.pointerId)
     }
@@ -180,7 +184,7 @@ export function Viewport() {
     }
   }, [isPanning, rubberBand, boardItems, vp])
 
-  const placeItem = (type: string, wx: number, wy: number) => {
+  const placeItem = (type: string, wx: number, wy: number): import('../db/db').Item | null => {
     const defaults: Record<string, { w: number; h: number; content?: Record<string, unknown> }> = {
       note: { w: 240, h: 120, content: { html: '' } },
       board: { w: 240, h: 160 },
@@ -203,7 +207,7 @@ export function Viewport() {
         parentId: currentBoardId,
         viewport: { panX: 0, panY: 0, zoom: 1 },
       })
-      createItem({
+      return createItem({
         boardId: currentBoardId,
         type: 'board',
         x: wx, y: wy,
@@ -212,7 +216,7 @@ export function Viewport() {
         content: {},
       })
     } else {
-      createItem({
+      return createItem({
         boardId: currentBoardId,
         type: type as import('../db/db').ItemType,
         x: wx, y: wy,
@@ -295,6 +299,17 @@ export function Viewport() {
         guides={guides}
         viewportRef={ref}
       />
+
+      {/* Armed tool overlay — blocks clicks reaching contenteditable elements */}
+      {armedTool && (
+        <div
+          className="absolute inset-0"
+          style={{
+            zIndex: 50,
+            cursor: (armedTool === 'line' || armedTool === 'line-start') ? 'crosshair' : 'copy',
+          }}
+        />
+      )}
 
       {/* Line placement preview — screen space, no zoom distortion */}
       {lineDrawState && linePreview && (() => {

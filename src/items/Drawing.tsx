@@ -38,6 +38,7 @@ export function DrawingCard({ item, isSelected, onPointerDown, onPointerMove, on
   const drawing = useRef(false)
   const isEditingRef = useRef(isEditing)
   isEditingRef.current = isEditing
+  const wasEverSelected = useRef(false)
 
   // Initialize/reload canvas when size or saved content changes
   useEffect(() => {
@@ -66,10 +67,13 @@ export function DrawingCard({ item, isSelected, onPointerDown, onPointerMove, on
     setIsEditing(false)
   }, [item.id])
 
-  // Auto-save when card loses selection while editing
+  // Auto-save only when transitioning from selected → deselected (not on mount)
   useEffect(() => {
-    if (!isSelected && isEditingRef.current) {
+    if (isSelected) {
+      wasEverSelected.current = true
+    } else if (wasEverSelected.current && isEditingRef.current) {
       doSave()
+      wasEverSelected.current = false
     }
   }, [isSelected, doSave])
 

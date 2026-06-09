@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-color": "^2.27.2",
     "@tiptap/extension-highlight": "^2.10.4",
     "@tiptap/extension-link": "^2.10.4",
     "@tiptap/extension-task-item": "^2.10.4",
     "@tiptap/extension-task-list": "^2.10.4",
     "@tiptap/extension-text-align": "^2.10.4",
+    "@tiptap/extension-text-style": "^2.27.2",
     "@tiptap/extension-underline": "^2.10.4",
     "@tiptap/react": "^2.10.4",
     "@tiptap/starter-kit": "^2.10.4",

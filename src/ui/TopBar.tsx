@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Search, Upload, Download, ChevronDown } from 'lucide-react'
+import { Search, Upload, Download, ChevronDown, LayoutGrid } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Breadcrumb } from './Breadcrumb'
 import { ZoomControl } from './ZoomControl'
 import { ViewMenu } from './ViewMenu'
@@ -9,6 +10,7 @@ import { TOPBAR_HEIGHT } from '../lib/constants'
 import { exportBoard, importCanvas, type CanvasFile } from '../lib/exportImport'
 
 export function TopBar() {
+  const navigate = useNavigate()
   const currentBoardId = useStore(s => s.currentBoardId)
   const boards = useStore(s => s.boards)
   const items = useStore(s => s.items)
@@ -21,8 +23,14 @@ export function TopBar() {
 
   const [toast, setToast] = useState<string | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
+  const [boardsOpen, setBoardsOpen] = useState(false)
   const [importing, setImporting] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
+  const boardsRef = useRef<HTMLDivElement>(null)
+
+  const allBoards = Object.values(boards)
+    .filter(b => b.id !== HOME_BOARD_ID)
+    .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -33,6 +41,9 @@ export function TopBar() {
     const handler = (e: MouseEvent) => {
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
         setExportOpen(false)
+      }
+      if (boardsRef.current && !boardsRef.current.contains(e.target as Node)) {
+        setBoardsOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -121,6 +132,43 @@ export function TopBar() {
         </button>
         <ZoomControl />
         <ViewMenu />
+
+        {/* Boards switcher */}
+        <div ref={boardsRef} className="relative">
+          <button
+            className="flex items-center gap-1 text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
+            title="Switch board"
+            onClick={() => setBoardsOpen(o => !o)}
+          >
+            <LayoutGrid size={13} />
+            Boards
+            <ChevronDown size={11} className={`transition-transform ${boardsOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {boardsOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-card-border rounded shadow-lg z-50 w-56 py-1 max-h-80 overflow-y-auto">
+              {allBoards.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-text-muted">No boards yet</div>
+              ) : (
+                allBoards.map(b => (
+                  <button
+                    key={b.id}
+                    className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 flex items-center gap-2 ${b.id === currentBoardId ? 'text-accent font-medium' : 'text-text-primary'}`}
+                    onClick={() => { navigate(`/b/${b.id}`); setBoardsOpen(false) }}
+                  >
+                    <div
+                      className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                      style={{ background: b.color || '#2D7FF9' }}
+                    />
+                    <span className="truncate">{b.title || 'Untitled'}</span>
+                    {b.id === currentBoardId && (
+                      <span className="ml-auto text-[10px] text-accent">current</span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Import */}
         <button
