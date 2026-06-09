@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { useStore } from '../state/store'
 import { ItemRenderer } from '../items/ItemRenderer'
-import { SvgConnectorLayer } from './SvgConnectorLayer'
 import { getLOD } from './lod'
 import { CULL_MARGIN, TOOLBAR_WIDTH, TOPBAR_HEIGHT } from '../lib/constants'
 import { rectsOverlap } from '../lib/coords'
@@ -11,11 +10,10 @@ interface Props {
   panY: number
   zoom: number
   guides: Array<{ axis: 'h' | 'v'; value: number }>
-  linePreview: { x1: number; y1: number; x2: number; y2: number } | null
   viewportRef: React.RefObject<HTMLDivElement>
 }
 
-export function World({ panX, panY, zoom, guides, linePreview, viewportRef }: Props) {
+export function World({ panX, panY, zoom, guides, viewportRef }: Props) {
   const currentBoardId = useStore(s => s.currentBoardId)
   const items = useStore(s => s.items)
   const lod = getLOD(zoom)
@@ -27,7 +25,6 @@ export function World({ panX, panY, zoom, guides, linePreview, viewportRef }: Pr
     [items, currentBoardId],
   )
 
-  // Viewport culling: compute visible world rect
   const vpW = (viewportRef.current?.clientWidth ?? window.innerWidth - TOOLBAR_WIDTH)
   const vpH = (viewportRef.current?.clientHeight ?? window.innerHeight - TOPBAR_HEIGHT)
   const margin = CULL_MARGIN / zoom
@@ -55,8 +52,6 @@ export function World({ panX, panY, zoom, guides, linePreview, viewportRef }: Pr
         height: 1,
       }}
     >
-      <SvgConnectorLayer items={visibleItems} linePreview={linePreview} zoom={zoom} />
-
       {visibleItems.map(item => (
         <ItemRenderer
           key={item.id}
@@ -83,4 +78,3 @@ export function World({ panX, panY, zoom, guides, linePreview, viewportRef }: Pr
     </div>
   )
 }
-

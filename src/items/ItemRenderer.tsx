@@ -13,6 +13,7 @@ import { TableCard } from './Table'
 import { ColumnCard } from './Column'
 import { CommentCard } from './Comment'
 import { DrawingCard } from './Drawing'
+import { LineCard } from './Line'
 import { SNAP_THRESHOLD } from '../lib/constants'
 
 const LOD_COLORS: Record<string, string> = {
@@ -57,7 +58,10 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
   const [isDragging, setIsDragging] = useState(false)
   const [localGuides, setLocalGuides] = useState<Array<{ axis: 'h' | 'v'; value: number }>>([])
 
-  if (item.type === 'line') return null // lines rendered in SVG layer
+  // Lines are self-contained SVG items — skip the shared drag/LOD logic
+  if (item.type === 'line') {
+    return <LineCard item={item} isSelected={selectedIds.has(item.id)} zoom={zoom} />
+  }
 
   const snapVal = (v: number) => {
     if (!snapToGrid) return v

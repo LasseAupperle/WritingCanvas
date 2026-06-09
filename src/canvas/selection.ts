@@ -53,7 +53,7 @@ export function computeAlignmentGuides(
   let snapX: number | undefined
   let snapY: number | undefined
 
-  const checkX = (movVal: number, snapTarget: number, key: 'snapX', delta: number) => {
+  const checkX = (movVal: number, snapTarget: number, delta: number) => {
     if (Math.abs(delta) < snapThresholdWorld) {
       if (snapX === undefined || Math.abs(delta) < Math.abs(movVal - (snapX ?? 0))) {
         snapX = snapTarget - (movVal - movingItems[0].x)
@@ -61,7 +61,7 @@ export function computeAlignmentGuides(
       lines.push({ axis: 'v', value: snapTarget })
     }
   }
-  const checkY = (movVal: number, snapTarget: number, key: 'snapY', delta: number) => {
+  const checkY = (movVal: number, snapTarget: number, delta: number) => {
     if (Math.abs(delta) < snapThresholdWorld) {
       if (snapY === undefined || Math.abs(delta) < Math.abs(movVal - (snapY ?? 0))) {
         snapY = snapTarget - (movVal - movingItems[0].y)
@@ -76,17 +76,17 @@ export function computeAlignmentGuides(
     const scx = s.x + s.w / 2
     const scy = s.y + s.h / 2
 
-    checkX(moving.x, s.x, 'snapX', moving.x - s.x)
-    checkX(moving.x, sx2, 'snapX', moving.x - sx2)
-    checkX(moving.x2, s.x, 'snapX', moving.x2 - s.x)
-    checkX(moving.x2, sx2, 'snapX', moving.x2 - sx2)
-    checkX(moving.cx, scx, 'snapX', moving.cx - scx)
+    checkX(moving.x, s.x, moving.x - s.x)
+    checkX(moving.x, sx2, moving.x - sx2)
+    checkX(moving.x2, s.x, moving.x2 - s.x)
+    checkX(moving.x2, sx2, moving.x2 - sx2)
+    checkX(moving.cx, scx, moving.cx - scx)
 
-    checkY(moving.y, s.y, 'snapY', moving.y - s.y)
-    checkY(moving.y, sy2, 'snapY', moving.y - sy2)
-    checkY(moving.y2, s.y, 'snapY', moving.y2 - s.y)
-    checkY(moving.y2, sy2, 'snapY', moving.y2 - sy2)
-    checkY(moving.cy, scy, 'snapY', moving.cy - scy)
+    checkY(moving.y, s.y, moving.y - s.y)
+    checkY(moving.y, sy2, moving.y - sy2)
+    checkY(moving.y2, s.y, moving.y2 - s.y)
+    checkY(moving.y2, sy2, moving.y2 - sy2)
+    checkY(moving.cy, scy, moving.cy - scy)
   }
 
   return { lines, snapX, snapY }

@@ -3,7 +3,7 @@ import { useStore } from '../state/store'
 import { useViewport } from './useViewport'
 import { World } from './World'
 import { TOOLBAR_WIDTH, TOPBAR_HEIGHT, SNAP_THRESHOLD } from '../lib/constants'
-import { screenToWorld } from '../lib/coords'
+import { screenToWorld, worldToScreen } from '../lib/coords'
 import { getItemsInRubberBand, computeAlignmentGuides } from './selection'
 import type { RubberBand } from './selection'
 import { pushHistory } from '../state/history'
@@ -293,9 +293,32 @@ export function Viewport() {
         panY={vp.panY}
         zoom={vp.zoom}
         guides={guides}
-        linePreview={lineDrawState && linePreview ? { ...lineDrawState, x2: linePreview.x, y2: linePreview.y } : null}
         viewportRef={ref}
       />
+
+      {/* Line placement preview — screen space, no zoom distortion */}
+      {lineDrawState && linePreview && (() => {
+        const p1 = worldToScreen(lineDrawState.x1, lineDrawState.y1, vp.panX, vp.panY, vp.zoom)
+        const p2 = worldToScreen(linePreview.x, linePreview.y, vp.panX, vp.panY, vp.zoom)
+        return (
+          <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 90 }}>
+            <defs>
+              <marker id="preview-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3"
+                orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#2D7FF9" />
+              </marker>
+            </defs>
+            <circle cx={p1.x} cy={p1.y} r={5} fill="#2D7FF9" opacity={0.6} />
+            <line
+              x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
+              stroke="#2D7FF9" strokeWidth={1.5}
+              strokeDasharray="6,4"
+              markerEnd="url(#preview-arrow)"
+            />
+          </svg>
+        )
+      })()}
+
       {/* Rubber band selection */}
       {rbRect && rbRect.width > 2 && rbRect.height > 2 && (
         <div

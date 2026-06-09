@@ -40,10 +40,6 @@ export function BoardView() {
     document.title = boards[resolvedId]?.title || 'Canvas'
   }, [resolvedId, boards[resolvedId]?.title])
 
-  useEffect(() => {
-    document.title = boards[resolvedId]?.title || 'Canvas'
-  }, [boards[resolvedId]?.title])
-
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     const target = e.target as HTMLElement
     const inText = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
