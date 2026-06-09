@@ -354,13 +354,12 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
         </BubbleMenu>
       )}
 
-      <div className="h-full">
-        <EditorContent
-          editor={editor}
-          className="tiptap-note h-full outline-none text-sm text-text-primary"
-          onPointerDown={e => e.stopPropagation()}
-        />
-      </div>
+      <EditorContent
+        editor={editor}
+        className="tiptap-note h-full outline-none text-sm text-text-primary"
+        style={{ padding: '8px', boxSizing: 'border-box' }}
+        onPointerDown={e => e.stopPropagation()}
+      />
     </CardShell>
   )
 }

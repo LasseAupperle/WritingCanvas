@@ -17,6 +17,7 @@ export function BoardCard({ item, isSelected, onPointerDown, onPointerMove, onPo
   const navigate = useNavigate()
   const boards = useStore(s => s.boards)
   const items = useStore(s => s.items)
+  const updateItem = useStore(s => s.updateItem)
   const childBoardId = item.childBoardId
   const childBoard = childBoardId ? boards[childBoardId] : null
 
@@ -29,55 +30,39 @@ export function BoardCard({ item, isSelected, onPointerDown, onPointerMove, onPo
   const boardCount = childItems.filter(i => i.type === 'board').length
   const docCount = childItems.filter(i => i.type === 'file' || i.type === 'image').length
 
-  const onDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (childBoardId) navigate(`/b/${childBoardId}`)
-  }
+  const goToBoard = () => { if (childBoardId) navigate(`/b/${childBoardId}`) }
 
   return (
     <CardShell
       item={item} isSelected={isSelected}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       zoom={zoom} minW={160} minH={100}
-      onDoubleClick={onDoubleClick}
-      className="overflow-hidden cursor-pointer"
+      className="overflow-hidden flex flex-col cursor-pointer"
+      onDoubleClick={goToBoard}
     >
       {/* Color header */}
       <div
-        className="h-8 flex items-center px-3 gap-2"
+        className="h-8 flex items-center px-3 gap-2 flex-shrink-0"
         style={{ background: childBoard?.color ?? '#2D7FF9' }}
       >
         <span className="text-white font-semibold text-sm truncate">
           {childBoard?.title ?? 'Board'}
         </span>
       </div>
-      <div className="p-2 flex-1 overflow-hidden">
-        <p className="text-xs text-text-muted mb-1">
+      <div className="px-2 pt-1 pb-0.5">
+        <p className="text-xs text-text-muted">
           {boardCount} boards · {noteCount} cards · {docCount} docs
         </p>
-        {childBoards.length > 0 && (
-          <div className="space-y-0.5">
-            {childBoards.map(cb => {
-              const cbBoard = cb.childBoardId ? boards[cb.childBoardId] : null
-              const cbItems = cb.childBoardId
-                ? Object.values(items).filter(i => i.boardId === cb.childBoardId).length
-                : 0
-              return (
-                <div key={cb.id} className="flex items-center gap-1 text-xs text-text-primary">
-                  <span
-                    className="w-2 h-2 rounded-sm flex-shrink-0"
-                    style={{ background: cbBoard?.color ?? '#aaa' }}
-                  />
-                  <span className="truncate">{cbBoard?.title ?? '...'}</span>
-                  <span className="text-text-muted ml-auto">{cbItems}</span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-        {childBoards.length === 0 && (
-          <p className="text-xs text-text-muted italic">Double-click to open</p>
-        )}
+      </div>
+      <div className="flex-1 overflow-hidden px-2 pb-2">
+        <textarea
+          className="w-full h-full text-sm text-text-primary bg-transparent border-none outline-none resize-none placeholder:text-text-muted cursor-text"
+          placeholder="Notes…"
+          value={((item.content as Record<string, unknown>)?.description as string) ?? ''}
+          onChange={e => updateItem(item.id, { content: { ...item.content, description: e.target.value } }, true)}
+          onPointerDown={e => e.stopPropagation()}
+          onDoubleClick={e => { e.stopPropagation(); goToBoard() }}
+        />
       </div>
     </CardShell>
   )

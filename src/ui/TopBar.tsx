@@ -197,26 +197,32 @@ export function TopBar() {
           </button>
           {boardsOpen && (
             <div className="absolute right-0 top-full mt-1 bg-white border border-card-border rounded shadow-lg z-50 w-56 py-1 max-h-80 overflow-y-auto">
-              {allBoards.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-text-muted">No boards yet</div>
-              ) : (
-                allBoards.map(b => (
+              {/* Home always shown first */}
+              {boards[HOME_BOARD_ID] && (() => {
+                const b = boards[HOME_BOARD_ID]
+                return (
                   <button
-                    key={b.id}
                     className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 flex items-center gap-2 ${b.id === currentBoardId ? 'text-accent font-medium' : 'text-text-primary'}`}
                     onClick={() => { navigate(`/b/${b.id}`); setBoardsOpen(false) }}
                   >
-                    <div
-                      className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                      style={{ background: b.color || '#2D7FF9' }}
-                    />
-                    <span className="truncate">{b.title || 'Untitled'}</span>
-                    {b.id === currentBoardId && (
-                      <span className="ml-auto text-[10px] text-accent">current</span>
-                    )}
+                    <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: b.color || '#2D7FF9' }} />
+                    <span className="truncate">{b.title || 'Home'}</span>
+                    {b.id === currentBoardId && <span className="ml-auto text-[10px] text-accent">current</span>}
                   </button>
-                ))
-              )}
+                )
+              })()}
+              {allBoards.length > 0 && <div className="border-t border-gray-100 my-0.5" />}
+              {allBoards.map(b => (
+                <button
+                  key={b.id}
+                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 flex items-center gap-2 ${b.id === currentBoardId ? 'text-accent font-medium' : 'text-text-primary'}`}
+                  onClick={() => { navigate(`/b/${b.id}`); setBoardsOpen(false) }}
+                >
+                  <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: b.color || '#2D7FF9' }} />
+                  <span className="truncate">{b.title || 'Untitled'}</span>
+                  {b.id === currentBoardId && <span className="ml-auto text-[10px] text-accent">current</span>}
+                </button>
+              ))}
             </div>
           )}
         </div>
