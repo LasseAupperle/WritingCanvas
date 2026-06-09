@@ -28,9 +28,11 @@ export function TopBar() {
   const [toast, setToast] = useState<string | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
   const [boardsOpen, setBoardsOpen] = useState(false)
+  const [colorOpen, setColorOpen] = useState(false)
   const [importing, setImporting] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
   const boardsRef = useRef<HTMLDivElement>(null)
+  const colorRef = useRef<HTMLDivElement>(null)
 
   // Only show boards that have a live board-card item (filters out pre-fix orphans in IndexedDB)
   const liveChildBoardIds = new Set(Object.values(items).filter(i => i.type === 'board' && i.childBoardId).map(i => i.childBoardId!))
@@ -50,6 +52,9 @@ export function TopBar() {
       }
       if (boardsRef.current && !boardsRef.current.contains(e.target as Node)) {
         setBoardsOpen(false)
+      }
+      if (colorRef.current && !colorRef.current.contains(e.target as Node)) {
+        setColorOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -115,15 +120,39 @@ export function TopBar() {
         <Breadcrumb boardId={currentBoardId} />
       </div>
 
-      {/* Center: board title (not on home) */}
-      {!isHome && board && (
-        <div className="flex-1 flex justify-center">
+      {/* Center: board title + color for all boards */}
+      {board && (
+        <div className="flex-1 flex justify-center items-center gap-1.5">
           <input
             className="font-semibold text-sm text-text-primary bg-transparent border-none outline-none text-center w-48 hover:bg-gray-50 rounded px-2 py-0.5"
             value={board.title}
             onChange={e => updateBoard(currentBoardId, { title: e.target.value })}
             placeholder="Board title"
           />
+          <div ref={colorRef} className="relative flex-shrink-0">
+            <button
+              title="Board color"
+              className="w-4 h-4 rounded-sm border border-gray-300 hover:scale-110 transition-transform"
+              style={{ background: board.color || '#2D7FF9' }}
+              onClick={() => setColorOpen(o => !o)}
+            />
+            {colorOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-card-border rounded shadow-lg z-50 p-1.5 flex gap-1">
+                {['#2D7FF9','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6B7280','#0EA5E9'].map(c => (
+                  <button
+                    key={c}
+                    className="w-4 h-4 rounded-sm hover:scale-125 transition-transform flex-shrink-0"
+                    style={{
+                      background: c,
+                      outline: board.color === c ? '2px solid #374151' : 'none',
+                      outlineOffset: 1,
+                    }}
+                    onClick={() => { updateBoard(currentBoardId, { color: c }); setColorOpen(false) }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
