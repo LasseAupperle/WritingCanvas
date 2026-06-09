@@ -69,7 +69,6 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
 
   const [linkInput, setLinkInput] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
-  const [showSizePresets, setShowSizePresets] = useState(false)
   const storedSelection = useRef<{ from: number; to: number } | null>(null)
 
   const editor = useEditor({
@@ -147,6 +146,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
             duration: 100,
             appendTo: () => document.getElementById('root') ?? document.body,
             zIndex: 9999,
+            maxWidth: 'none',
             popperOptions: { strategy: 'fixed' },
           }}
         >
@@ -211,43 +211,33 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
 
                 <Sep />
 
-                {/* Font size: input + preset dropdown */}
-                <div className="relative flex items-center">
+                {/* Font size: number input + preset select */}
+                <div className="flex items-center">
                   <input
                     type="number"
                     title="Font size (px)"
                     value={currentFontSize}
                     onChange={e => applyFontSize(e.target.value)}
-                    onBlur={() => setShowSizePresets(false)}
                     placeholder="px"
                     min={6} max={200}
                     className="w-10 text-xs text-center border border-gray-200 rounded-l py-0.5 outline-none"
                     onPointerDown={e => e.stopPropagation()}
                   />
-                  <button
+                  <select
                     title="Font size presets"
-                    className="border border-l-0 border-gray-200 rounded-r px-1 py-0.5 text-[10px] text-text-muted hover:bg-gray-100 leading-none"
-                    onMouseDown={e => { e.preventDefault(); setShowSizePresets(v => !v) }}
+                    className="border border-l-0 border-gray-200 rounded-r text-[10px] text-text-muted outline-none cursor-pointer bg-white py-0.5 pr-1 pl-0.5 leading-none"
+                    value=""
+                    onChange={e => {
+                      const val = e.target.value
+                      if (val) editor.chain().focus().setFontSize(`${val}px`).run()
+                    }}
+                    onPointerDown={e => e.stopPropagation()}
                   >
-                    ▾
-                  </button>
-                  {showSizePresets && (
-                    <div className="absolute top-full left-0 mt-0.5 bg-white border border-gray-200 rounded shadow-lg z-20 py-0.5 grid grid-cols-2 w-24">
-                      {FONT_SIZE_PRESETS.map(s => (
-                        <button
-                          key={s}
-                          className={`text-xs px-2 py-0.5 hover:bg-gray-100 text-left ${currentFontSize === String(s) ? 'text-accent font-medium' : ''}`}
-                          onMouseDown={e => {
-                            e.preventDefault()
-                            editor.chain().focus().setFontSize(`${s}px`).run()
-                            setShowSizePresets(false)
-                          }}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    <option value="">▾</option>
+                    {FONT_SIZE_PRESETS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <Sep />
@@ -303,7 +293,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                   <button
                     key={c.value}
                     title={`Highlight: ${c.label}`}
-                    className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125 flex items-center justify-center"
+                    className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
                     style={{
                       background: c.value,
                       border: editor.isActive('highlight', { color: c.value }) ? '2px solid #2D7FF9' : '1px solid rgba(0,0,0,0.15)',
@@ -316,9 +306,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                         editor.chain().focus().setHighlight({ color: c.value }).run()
                       }
                     }}
-                  >
-                    <span className="text-[7px] text-gray-600 font-bold leading-none select-none">H</span>
-                  </button>
+                  />
                 ))}
 
                 <Sep />
