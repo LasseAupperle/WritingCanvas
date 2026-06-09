@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { type Item } from '../db/db'
 import { useStore } from '../state/store'
 import { CardShell } from './CardShell'
+import { RichTextEditor } from './RichTextEditor'
+import { pushHistory } from '../state/history'
 
 interface Props {
   item: Item
@@ -18,6 +20,7 @@ export function BoardCard({ item, isSelected, onPointerDown, onPointerMove, onPo
   const boards = useStore(s => s.boards)
   const items = useStore(s => s.items)
   const updateItem = useStore(s => s.updateItem)
+  const before = useRef<Item>({ ...item })
   const childBoardId = item.childBoardId
   const childBoard = childBoardId ? boards[childBoardId] : null
 
@@ -25,12 +28,12 @@ export function BoardCard({ item, isSelected, onPointerDown, onPointerMove, onPo
     ? Object.values(items).filter(i => i.boardId === childBoardId)
     : []
 
-  const childBoards = childItems.filter(i => i.type === 'board').slice(0, 5)
   const noteCount = childItems.filter(i => i.type === 'note' || i.type === 'comment').length
   const boardCount = childItems.filter(i => i.type === 'board').length
   const docCount = childItems.filter(i => i.type === 'file' || i.type === 'image').length
 
   const goToBoard = () => { if (childBoardId) navigate(`/b/${childBoardId}`) }
+  const description = ((item.content as Record<string, unknown>)?.description as string) ?? ''
 
   return (
     <CardShell
@@ -54,14 +57,19 @@ export function BoardCard({ item, isSelected, onPointerDown, onPointerMove, onPo
           {boardCount} boards · {noteCount} cards · {docCount} docs
         </p>
       </div>
-      <div className="flex-1 overflow-hidden px-2 pb-2">
-        <textarea
-          className="w-full h-full text-sm text-text-primary bg-transparent border-none outline-none resize-none placeholder:text-text-muted cursor-text"
-          placeholder="Notes…"
-          value={((item.content as Record<string, unknown>)?.description as string) ?? ''}
-          onChange={e => updateItem(item.id, { content: { ...item.content, description: e.target.value } }, true)}
-          onPointerDown={e => e.stopPropagation()}
-          onDoubleClick={e => { e.stopPropagation(); goToBoard() }}
+      <div
+        className="flex-1 overflow-auto px-2 pb-2"
+        onDoubleClick={e => e.stopPropagation()}
+      >
+        <RichTextEditor
+          html={description}
+          onFocus={() => { before.current = { ...item } }}
+          onSave={html => {
+            updateItem(item.id, { content: { ...item.content, description: html } }, true)
+            pushHistory({ type: 'update', before: before.current, after: { ...item, content: { ...item.content, description: html } } }, item.boardId)
+          }}
+          className="tiptap-note h-full outline-none text-sm text-text-primary"
+          style={{ boxSizing: 'border-box' }}
         />
       </div>
     </CardShell>
