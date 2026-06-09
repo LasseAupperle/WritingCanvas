@@ -28,8 +28,10 @@ export function TopBar() {
   const exportRef = useRef<HTMLDivElement>(null)
   const boardsRef = useRef<HTMLDivElement>(null)
 
+  // Only show boards that have a live board-card item (filters out pre-fix orphans in IndexedDB)
+  const liveChildBoardIds = new Set(Object.values(items).filter(i => i.type === 'board' && i.childBoardId).map(i => i.childBoardId!))
   const allBoards = Object.values(boards)
-    .filter(b => b.id !== HOME_BOARD_ID)
+    .filter(b => b.id !== HOME_BOARD_ID && liveChildBoardIds.has(b.id))
     .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 
   const showToast = (msg: string) => {
