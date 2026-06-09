@@ -12,6 +12,7 @@ import { FileCard } from './File'
 import { TableCard } from './Table'
 import { ColumnCard } from './Column'
 import { CommentCard } from './Comment'
+import { DrawingCard } from './Drawing'
 import { SNAP_THRESHOLD } from '../lib/constants'
 
 const LOD_COLORS: Record<string, string> = {
@@ -24,6 +25,7 @@ const LOD_COLORS: Record<string, string> = {
   table: '#F0F0FF',
   column: '#F8F8F8',
   comment: '#FFFBEA',
+  drawing: '#FFFFFF',
   line: 'transparent',
 }
 
@@ -262,6 +264,7 @@ export function ItemRenderer({ item, lod, zoom }: Props) {
       {item.type === 'table' && <TableCard {...sharedProps} />}
       {item.type === 'column' && <ColumnCard {...sharedProps} />}
       {item.type === 'comment' && <CommentCard {...sharedProps} />}
+      {item.type === 'drawing' && <DrawingCard {...sharedProps} />}
     </>
   )
 }

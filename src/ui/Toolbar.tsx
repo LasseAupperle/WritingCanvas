@@ -12,7 +12,7 @@ import { newId } from '../lib/ids'
 import type { ItemType } from '../db/db'
 
 interface ToolDef {
-  type: ItemType | 'draw'
+  type: ItemType
   icon: React.ReactNode
   label: string
   description: string
@@ -78,11 +78,11 @@ const TOOLS: ToolDef[] = [
     description: 'Editable grid with rows and columns. Click a cell to edit. Add or remove rows.',
   },
   {
-    type: 'draw',
+    type: 'drawing',
     icon: <PenTool size={18} />,
     label: 'Draw',
-    description: 'Freehand drawing. Coming in a future update.',
-    tip: 'Not available yet',
+    description: 'Freehand drawing on a canvas. Click to place, then draw with pen or eraser.',
+    tip: 'Double-click an existing drawing to edit it again',
   },
 ]
 
@@ -130,8 +130,6 @@ export function Toolbar() {
   }
 
   const arm = (type: string) => {
-    if (type === 'draw') return
-
     if (type === 'image') {
       const input = document.createElement('input')
       input.type = 'file'
@@ -180,7 +178,6 @@ export function Toolbar() {
         style={{ top: TOPBAR_HEIGHT, width: TOOLBAR_WIDTH }}
       >
         {TOOLS.map(tool => {
-          const isDisabled = tool.type === 'draw'
           const isArmed = armedTool === tool.type
           return (
             <Tooltip
@@ -191,7 +188,7 @@ export function Toolbar() {
                   name={tool.label}
                   description={tool.description}
                   shortcut={tool.shortcut}
-                  tip={isDisabled ? 'Coming in a future update' : tool.tip}
+                  tip={tool.tip}
                 />
               }
             >
@@ -199,9 +196,8 @@ export function Toolbar() {
                 icon={tool.icon}
                 label={tool.label}
                 armed={isArmed}
-                disabled={isDisabled}
                 onClick={() => arm(tool.type)}
-                onDragStart={tool.dragDisabled || isDisabled ? undefined : e => onDragStart(e, tool.type)}
+                onDragStart={tool.dragDisabled ? undefined : e => onDragStart(e, tool.type)}
               />
             </Tooltip>
           )

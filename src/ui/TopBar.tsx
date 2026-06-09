@@ -1,24 +1,88 @@
-import React, { useState } from 'react'
-import { Search } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { Search, Upload, Download, ChevronDown } from 'lucide-react'
 import { Breadcrumb } from './Breadcrumb'
 import { ZoomControl } from './ZoomControl'
 import { ViewMenu } from './ViewMenu'
 import { useStore } from '../state/store'
 import { HOME_BOARD_ID } from '../lib/ids'
 import { TOPBAR_HEIGHT } from '../lib/constants'
+import { exportBoard, importCanvas, type CanvasFile } from '../lib/exportImport'
 
 export function TopBar() {
   const currentBoardId = useStore(s => s.currentBoardId)
   const boards = useStore(s => s.boards)
+  const items = useStore(s => s.items)
   const updateBoard = useStore(s => s.updateBoard)
+  const setBoards = useStore(s => s.setBoards)
+  const setItems = useStore(s => s.setItems)
   const setSearchOpen = useStore(s => s.setSearchOpen)
   const board = boards[currentBoardId]
   const isHome = currentBoardId === HOME_BOARD_ID
+
   const [toast, setToast] = useState<string | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
 
   const showToast = (msg: string) => {
     setToast(msg)
-    setTimeout(() => setToast(null), 2000)
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleExport = async (includeChildren: boolean) => {
+    setExportOpen(false)
+    if (!board) return
+    try {
+      await exportBoard(
+        board,
+        Object.values(items),
+        boards,
+        includeChildren,
+      )
+      showToast('Board exported successfully')
+    } catch {
+      showToast('Export failed — try again')
+    }
+  }
+
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.canvas'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      setImporting(true)
+      try {
+        const text = await file.text()
+        const data = JSON.parse(text) as CanvasFile
+        if (data.version !== 1 || !data.board || !data.items) {
+          showToast('Invalid .canvas file')
+          return
+        }
+        const existingBoards = Object.values(boards)
+        const existingItems = Object.values(items)
+        const result = await importCanvas(data, existingBoards, existingItems, currentBoardId)
+        setBoards([...existingBoards, ...result.newBoards])
+        setItems([...existingItems, ...result.newItems])
+        showToast(`Imported "${data.board.title}" successfully`)
+      } catch {
+        showToast('Import failed — invalid file')
+      } finally {
+        setImporting(false)
+      }
+    }
+    input.click()
   }
 
   return (
@@ -46,7 +110,7 @@ export function TopBar() {
         </div>
       )}
 
-      {/* Right: search, zoom, share, export */}
+      {/* Right: search, zoom, view, import, export */}
       <div className="flex items-center gap-2 flex-1 justify-end">
         <button
           className="p-1.5 rounded hover:bg-gray-100 text-text-muted"
@@ -57,20 +121,48 @@ export function TopBar() {
         </button>
         <ZoomControl />
         <ViewMenu />
+
+        {/* Import */}
         <button
-          className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
-          title="Share (coming soon)"
-          onClick={() => showToast('Share — coming in a future update')}
+          className="flex items-center gap-1 text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
+          title="Import a .canvas file"
+          disabled={importing}
+          onClick={handleImport}
         >
-          Share
+          <Upload size={13} />
+          {importing ? 'Importing…' : 'Import'}
         </button>
-        <button
-          className="text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
-          title="Export (coming soon)"
-          onClick={() => showToast('Export — coming in a future update')}
-        >
-          Export ▾
-        </button>
+
+        {/* Export dropdown */}
+        <div ref={exportRef} className="relative">
+          <button
+            className="flex items-center gap-1 text-xs text-text-muted px-2 py-1 rounded hover:bg-gray-100"
+            title="Export current board"
+            onClick={() => setExportOpen(o => !o)}
+          >
+            <Download size={13} />
+            Export
+            <ChevronDown size={11} className={`transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {exportOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-card-border rounded shadow-lg z-50 w-52 py-1">
+              <button
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                onClick={() => handleExport(false)}
+              >
+                Export this board
+                <div className="text-xs text-text-muted mt-0.5">Items on current board only</div>
+              </button>
+              <button
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                onClick={() => handleExport(true)}
+              >
+                Export with sub-boards
+                <div className="text-xs text-text-muted mt-0.5">Include all nested boards</div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {toast && (

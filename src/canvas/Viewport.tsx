@@ -191,6 +191,7 @@ export function Viewport() {
       table: { w: 300, h: 160, content: { columns: ['Column 1', 'Column 2'], rows: [['', '']] } },
       column: { w: 220, h: 300, content: { title: 'Column', childIds: [] } },
       comment: { w: 200, h: 100, content: { text: '' } },
+      drawing: { w: 400, h: 300, content: {} },
       line: { w: 100, h: 1, content: { x1: wx, y1: wy, x2: wx + 100, y2: wy, arrowEnd: true } },
     }
     const d = defaults[type] ?? { w: 200, h: 100 }

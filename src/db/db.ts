@@ -15,7 +15,7 @@ export interface Board {
 
 export type ItemType =
   | 'note' | 'board' | 'todo' | 'link' | 'image' | 'file'
-  | 'table' | 'column' | 'line' | 'comment'
+  | 'table' | 'column' | 'line' | 'comment' | 'drawing'
 
 export interface Item {
   id: ItemId
