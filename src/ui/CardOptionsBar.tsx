@@ -4,17 +4,24 @@ import { useStore } from '../state/store'
 const CARD_COLORS = [
   { value: '', label: 'Default', bg: '#FFFFFF', border: '#E5E7EB' },
   { value: '#FFFDE7', label: 'Yellow', bg: '#FFFDE7', border: '#F9E79F' },
+  { value: '#FFF8E1', label: 'Amber', bg: '#FFF8E1', border: '#FFE082' },
   { value: '#F1F8E9', label: 'Green', bg: '#F1F8E9', border: '#C5E1A5' },
+  { value: '#E0F7FA', label: 'Teal', bg: '#E0F7FA', border: '#80DEEA' },
   { value: '#E3F2FD', label: 'Blue', bg: '#E3F2FD', border: '#90CAF9' },
-  { value: '#FCE4EC', label: 'Pink', bg: '#FCE4EC', border: '#F48FB1' },
+  { value: '#EDE7F6', label: 'Indigo', bg: '#EDE7F6', border: '#B39DDB' },
   { value: '#F3E5F5', label: 'Purple', bg: '#F3E5F5', border: '#CE93D8' },
+  { value: '#FCE4EC', label: 'Pink', bg: '#FCE4EC', border: '#F48FB1' },
+  { value: '#FFEBEE', label: 'Red', bg: '#FFEBEE', border: '#EF9A9A' },
   { value: '#FFF3E0', label: 'Orange', bg: '#FFF3E0', border: '#FFCC80' },
+  { value: '#FBE9E7', label: 'Coral', bg: '#FBE9E7', border: '#FFAB91' },
   { value: '#F5F5F5', label: 'Grey', bg: '#F5F5F5', border: '#BDBDBD' },
+  { value: '#FDF6E3', label: 'Cream', bg: '#FDF6E3', border: '#E8D5A3' },
 ]
 
 const BOARD_COLORS = [
-  '#2D7FF9', '#10B981', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#EC4899', '#6B7280', '#0EA5E9',
+  '#2D7FF9', '#0EA5E9', '#06B6D4', '#10B981',
+  '#84CC16', '#F59E0B', '#F97316', '#EF4444',
+  '#F43F5E', '#EC4899', '#8B5CF6', '#6B7280',
 ]
 
 export function CardOptionsBar() {

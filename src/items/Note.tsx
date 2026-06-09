@@ -40,7 +40,18 @@ const FONT_FAMILIES = [
 
 const FONT_SIZE_PRESETS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 96]
 
-const TEXT_COLORS = [
+const TEXT_COLORS_DARK = [
+  { value: '#111827', label: 'Black' },
+  { value: '#7f1d1d', label: 'Dark Red' },
+  { value: '#7c2d12', label: 'Dark Orange' },
+  { value: '#78350f', label: 'Dark Amber' },
+  { value: '#14532d', label: 'Dark Green' },
+  { value: '#1e3a8a', label: 'Dark Blue' },
+  { value: '#4c1d95', label: 'Dark Purple' },
+  { value: '#831843', label: 'Dark Pink' },
+]
+
+const TEXT_COLORS_LIGHT = [
   { value: '#374151', label: 'Default' },
   { value: '#ef4444', label: 'Red' },
   { value: '#f97316', label: 'Orange' },
@@ -51,7 +62,7 @@ const TEXT_COLORS = [
   { value: '#ec4899', label: 'Pink' },
 ]
 
-const HIGHLIGHT_COLORS = [
+const HIGHLIGHT_COLORS_VIVID = [
   { value: '#fef08a', label: 'Yellow' },
   { value: '#bbf7d0', label: 'Green' },
   { value: '#bfdbfe', label: 'Blue' },
@@ -59,7 +70,18 @@ const HIGHLIGHT_COLORS = [
   { value: '#fed7aa', label: 'Orange' },
   { value: '#e9d5ff', label: 'Purple' },
   { value: '#fecaca', label: 'Red' },
-  { value: '#e5e7eb', label: 'Grey' },
+  { value: '#99f6e4', label: 'Teal' },
+]
+
+const HIGHLIGHT_COLORS_PALE = [
+  { value: '#fef9c3', label: 'Light Yellow' },
+  { value: '#dcfce7', label: 'Light Green' },
+  { value: '#dbeafe', label: 'Light Blue' },
+  { value: '#fce7f3', label: 'Light Pink' },
+  { value: '#fff7ed', label: 'Light Orange' },
+  { value: '#f5f3ff', label: 'Light Purple' },
+  { value: '#fee2e2', label: 'Light Red' },
+  { value: '#f0fdfa', label: 'Light Teal' },
 ]
 
 export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPointerUp, zoom }: Props) {
@@ -270,10 +292,9 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                 </FmtBtn>
               </div>
 
-              {/* Row 2: Colors + links + clear */}
-              <div className="flex items-center gap-0.5 px-1.5 pb-1 pt-0.5 border-t border-gray-100">
-                {/* Text colors */}
-                {TEXT_COLORS.map(c => (
+              {/* Row 2: Text colors + links + clear */}
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 border-t border-gray-100">
+                {TEXT_COLORS_DARK.map(c => (
                   <button
                     key={c.value}
                     title={`Text: ${c.label}`}
@@ -285,33 +306,20 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                     onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(c.value).run() }}
                   />
                 ))}
-
                 <Sep />
-
-                {/* Highlight / background colors */}
-                {HIGHLIGHT_COLORS.map(c => (
+                {TEXT_COLORS_LIGHT.map(c => (
                   <button
                     key={c.value}
-                    title={`Highlight: ${c.label}`}
+                    title={`Text: ${c.label}`}
                     className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
                     style={{
                       background: c.value,
-                      border: editor.isActive('highlight', { color: c.value }) ? '2px solid #2D7FF9' : '1px solid rgba(0,0,0,0.15)',
+                      border: editor.isActive('textStyle', { color: c.value }) ? '2px solid #2D7FF9' : '1px solid rgba(0,0,0,0.15)',
                     }}
-                    onMouseDown={e => {
-                      e.preventDefault()
-                      if (editor.isActive('highlight', { color: c.value })) {
-                        editor.chain().focus().unsetHighlight().run()
-                      } else {
-                        editor.chain().focus().setHighlight({ color: c.value }).run()
-                      }
-                    }}
+                    onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(c.value).run() }}
                   />
                 ))}
-
                 <Sep />
-
-                {/* Link controls */}
                 {editor.isActive('link') ? (
                   <>
                     <button title="Edit link" className="p-0.5 rounded hover:bg-gray-100 text-accent" onMouseDown={e => { e.preventDefault(); openLinkInput() }}>
@@ -337,10 +345,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                     <LinkIcon size={11} />
                   </button>
                 )}
-
                 <Sep />
-
-                {/* Clear all formatting */}
                 <button
                   title="Clear formatting"
                   className="text-[10px] px-1 py-0.5 rounded hover:bg-gray-100 text-text-muted leading-none"
@@ -348,6 +353,49 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
                 >
                   ✕
                 </button>
+              </div>
+
+              {/* Row 3: Highlight / background colors */}
+              <div className="flex items-center gap-0.5 px-1.5 pb-1 pt-0.5 border-t border-gray-100">
+                {HIGHLIGHT_COLORS_VIVID.map(c => (
+                  <button
+                    key={c.value}
+                    title={`Highlight: ${c.label}`}
+                    className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
+                    style={{
+                      background: c.value,
+                      border: editor.isActive('highlight', { color: c.value }) ? '2px solid #2D7FF9' : '1px solid rgba(0,0,0,0.15)',
+                    }}
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      if (editor.isActive('highlight', { color: c.value })) {
+                        editor.chain().focus().unsetHighlight().run()
+                      } else {
+                        editor.chain().focus().setHighlight({ color: c.value }).run()
+                      }
+                    }}
+                  />
+                ))}
+                <Sep />
+                {HIGHLIGHT_COLORS_PALE.map(c => (
+                  <button
+                    key={c.value}
+                    title={`Highlight: ${c.label}`}
+                    className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-transform hover:scale-125"
+                    style={{
+                      background: c.value,
+                      border: editor.isActive('highlight', { color: c.value }) ? '2px solid #2D7FF9' : '1px solid rgba(0,0,0,0.15)',
+                    }}
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      if (editor.isActive('highlight', { color: c.value })) {
+                        editor.chain().focus().unsetHighlight().run()
+                      } else {
+                        editor.chain().focus().setHighlight({ color: c.value }).run()
+                      }
+                    }}
+                  />
+                ))}
               </div>
             </div>
           )}
