@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Search, Upload, Download, ChevronDown, LayoutGrid } from 'lucide-react'
+import { Search, Upload, Download, ChevronDown, LayoutGrid, Undo2, Redo2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Breadcrumb } from './Breadcrumb'
 import { ZoomControl } from './ZoomControl'
@@ -18,6 +18,10 @@ export function TopBar() {
   const setBoards = useStore(s => s.setBoards)
   const setItems = useStore(s => s.setItems)
   const setSearchOpen = useStore(s => s.setSearchOpen)
+  const undo = useStore(s => s.undo)
+  const redo = useStore(s => s.redo)
+  const undoCount = useStore(s => s.undoCount)
+  const redoCount = useStore(s => s.redoCount)
   const board = boards[currentBoardId]
   const isHome = currentBoardId === HOME_BOARD_ID
 
@@ -131,6 +135,22 @@ export function TopBar() {
           title="Search (Ctrl+F)"
         >
           <Search size={16} />
+        </button>
+        <button
+          className={`p-1.5 rounded transition-colors ${undoCount > 0 ? 'hover:bg-gray-100 text-text-muted hover:text-text-primary' : 'text-gray-300 cursor-not-allowed'}`}
+          onClick={undoCount > 0 ? undo : undefined}
+          title={`Undo (Ctrl+Z)${undoCount > 0 ? ` — ${undoCount} step${undoCount !== 1 ? 's' : ''}` : ''}`}
+          disabled={undoCount === 0}
+        >
+          <Undo2 size={16} />
+        </button>
+        <button
+          className={`p-1.5 rounded transition-colors ${redoCount > 0 ? 'hover:bg-gray-100 text-text-muted hover:text-text-primary' : 'text-gray-300 cursor-not-allowed'}`}
+          onClick={redoCount > 0 ? redo : undefined}
+          title={`Redo (Ctrl+Y)${redoCount > 0 ? ` — ${redoCount} step${redoCount !== 1 ? 's' : ''}` : ''}`}
+          disabled={redoCount === 0}
+        >
+          <Redo2 size={16} />
         </button>
         <ZoomControl />
         <ViewMenu />

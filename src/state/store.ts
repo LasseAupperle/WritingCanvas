@@ -6,7 +6,7 @@ import {
 } from '../db/persistence'
 import { newId } from '../lib/ids'
 import { DEFAULT_ZOOM } from '../lib/constants'
-import { pushHistory, undoHistory, redoHistory } from './history'
+import { pushHistory, undoHistory, redoHistory, getHistoryCounts, registerHistoryNotify } from './history'
 
 export type ArmedTool = ItemType | 'line-start' | null
 
@@ -61,9 +61,12 @@ export interface AppState {
   setSearchOpen: (v: boolean) => void
   setInAppClipboard: (items: Item[]) => void
   setDragOverTrash: (v: boolean) => void
+  undoCount: number
+  redoCount: number
 
   undo: () => void
   redo: () => void
+  setHistoryCounts: (undo: number, redo: number) => void
 
   getBoardItems: (boardId: string) => Item[]
   getBoardAncestors: (boardId: string) => Board[]
@@ -84,6 +87,10 @@ export const useStore = create<AppState>((set, get) => ({
   searchOpen: false,
   inAppClipboard: [],
   dragOverTrash: false,
+  undoCount: getHistoryCounts().undo,
+  redoCount: getHistoryCounts().redo,
+
+  setHistoryCounts: (undo, redo) => set({ undoCount: undo, redoCount: redo }),
 
   setBoards: (boards) =>
     set({ boards: Object.fromEntries(boards.map(b => [b.id, b])) }),
@@ -204,10 +211,18 @@ export const useStore = create<AppState>((set, get) => ({
   setInAppClipboard: (items) => set({ inAppClipboard: items }),
   setDragOverTrash: (v) => set({ dragOverTrash: v }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  undo: () => undoHistory(get as any, set as any),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  redo: () => redoHistory(get as any, set as any),
+  undo: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    undoHistory(get as any, set as any)
+    const counts = getHistoryCounts()
+    set({ undoCount: counts.undo, redoCount: counts.redo })
+  },
+  redo: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    redoHistory(get as any, set as any)
+    const counts = getHistoryCounts()
+    set({ undoCount: counts.undo, redoCount: counts.redo })
+  },
 
   getBoardItems: (boardId) =>
     Object.values(get().items).filter(i => i.boardId === boardId),
@@ -229,6 +244,11 @@ export const useStore = create<AppState>((set, get) => ({
     return items.length ? Math.max(...items.map(i => i.z)) : 0
   },
 }))
+
+// Keep undoCount/redoCount in sync whenever pushHistory is called from outside store actions
+registerHistoryNotify((undo, redo) => {
+  useStore.getState().setHistoryCounts(undo, redo)
+})
 
 export const getViewport = (state: AppState): ViewportState => {
   const board = state.boards[state.currentBoardId]
