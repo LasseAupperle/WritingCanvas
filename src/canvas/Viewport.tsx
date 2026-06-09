@@ -23,7 +23,8 @@ export function Viewport() {
   const items = useStore(s => s.items)
   const snapToGrid = useStore(s => s.snapToGrid)
   const smartGuides = useStore(s => s.smartGuides)
-  const showGrid = useStore(s => s.showGrid)
+  const boards = useStore(s => s.boards)
+  const showGrid = boards[currentBoardId]?.showGrid ?? false
   const boardItems = Object.values(items).filter(i => i.boardId === currentBoardId && !i.content?.['unsorted'])
 
   const ref = useRef<HTMLDivElement>(null)

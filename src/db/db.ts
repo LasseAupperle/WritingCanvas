@@ -9,6 +9,7 @@ export interface Board {
   color: string
   parentId: BoardId | null
   viewport: { panX: number; panY: number; zoom: number }
+  showGrid?: boolean
   createdAt: number
   updatedAt: number
 }

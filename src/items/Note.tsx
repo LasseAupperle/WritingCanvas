@@ -354,7 +354,7 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
         </BubbleMenu>
       )}
 
-      <div className="p-2 h-full">
+      <div className="h-full">
         <EditorContent
           editor={editor}
           className="tiptap-note h-full outline-none text-sm text-text-primary"

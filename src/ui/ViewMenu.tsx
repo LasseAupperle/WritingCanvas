@@ -6,11 +6,23 @@ export function ViewMenu() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const snapToGrid = useStore(s => s.snapToGrid)
-  const showGrid = useStore(s => s.showGrid)
   const smartGuides = useStore(s => s.smartGuides)
   const setSnapToGrid = useStore(s => s.setSnapToGrid)
-  const setShowGrid = useStore(s => s.setShowGrid)
   const setSmartGuides = useStore(s => s.setSmartGuides)
+  const currentBoardId = useStore(s => s.currentBoardId)
+  const boards = useStore(s => s.boards)
+  const updateBoard = useStore(s => s.updateBoard)
+
+  const showGrid = boards[currentBoardId]?.showGrid ?? false
+
+  const toggleGrid = (v: boolean) => {
+    updateBoard(currentBoardId, { showGrid: v })
+  }
+
+  const toggleSnap = (v: boolean) => {
+    setSnapToGrid(v)
+    if (v) updateBoard(currentBoardId, { showGrid: true })
+  }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -32,8 +44,8 @@ export function ViewMenu() {
       {open && (
         <div className="absolute right-0 top-full mt-1 bg-white border border-card-border rounded shadow-lg z-50 w-48 py-1">
           <Toggle label="Smart guides" value={smartGuides} onChange={setSmartGuides} />
-          <Toggle label="Snap to grid" value={snapToGrid} onChange={v => { setSnapToGrid(v); if (v) setShowGrid(true) }} />
-          <Toggle label="Grid overlay" value={showGrid} onChange={setShowGrid} />
+          <Toggle label="Snap to grid" value={snapToGrid} onChange={toggleSnap} />
+          <Toggle label="Grid overlay" value={showGrid} onChange={toggleGrid} />
         </div>
       )}
     </div>

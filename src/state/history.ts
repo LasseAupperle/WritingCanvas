@@ -81,6 +81,7 @@ function notify() {
 
 export function pushHistory(entry: HistoryEntry) {
   undoStack.push(entry)
+  if (undoStack.length > MAX_ENTRIES) undoStack.shift()
   redoStack.length = 0
   notify()
 }

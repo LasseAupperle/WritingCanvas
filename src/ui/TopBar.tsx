@@ -139,7 +139,7 @@ export function TopBar() {
         <button
           className={`p-1.5 rounded transition-colors ${undoCount > 0 ? 'hover:bg-gray-100 text-text-muted hover:text-text-primary' : 'text-gray-300 cursor-not-allowed'}`}
           onClick={undoCount > 0 ? undo : undefined}
-          title={`Undo (Ctrl+Z)${undoCount > 0 ? ` — ${undoCount} step${undoCount !== 1 ? 's' : ''}` : ''}`}
+          title="Undo (Ctrl+Z)"
           disabled={undoCount === 0}
         >
           <Undo2 size={16} />
@@ -147,7 +147,7 @@ export function TopBar() {
         <button
           className={`p-1.5 rounded transition-colors ${redoCount > 0 ? 'hover:bg-gray-100 text-text-muted hover:text-text-primary' : 'text-gray-300 cursor-not-allowed'}`}
           onClick={redoCount > 0 ? redo : undefined}
-          title={`Redo (Ctrl+Y)${redoCount > 0 ? ` — ${redoCount} step${redoCount !== 1 ? 's' : ''}` : ''}`}
+          title="Redo (Ctrl+Y)"
           disabled={redoCount === 0}
         >
           <Redo2 size={16} />
