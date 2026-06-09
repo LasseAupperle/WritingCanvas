@@ -133,20 +133,30 @@ export const useStore = create<AppState>((set, get) => ({
     set(state => {
       const items = { ...state.items }
       delete items[id]
-      return { items }
+      const boards = item.type === 'board' && item.childBoardId
+        ? (() => { const b = { ...state.boards }; delete b[item.childBoardId!]; return b })()
+        : state.boards
+      return { items, boards }
     })
     deleteItem(id)
+    if (item.type === 'board' && item.childBoardId) deleteBoard(item.childBoardId)
     pushHistory({ type: 'delete', item })
   },
 
   removeItems: (ids) => {
     const items = ids.map(id => get().items[id]).filter(Boolean) as Item[]
+    const boardChildIds = items
+      .filter(i => i.type === 'board' && i.childBoardId)
+      .map(i => i.childBoardId!)
     set(state => {
       const newItems = { ...state.items }
+      const newBoards = { ...state.boards }
       for (const id of ids) delete newItems[id]
-      return { items: newItems, selectedIds: new Set() }
+      for (const boardId of boardChildIds) delete newBoards[boardId]
+      return { items: newItems, boards: newBoards, selectedIds: new Set() }
     })
     for (const id of ids) deleteItem(id)
+    for (const boardId of boardChildIds) deleteBoard(boardId)
     pushHistory({ type: 'delete-multi', items })
   },
 

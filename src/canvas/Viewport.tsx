@@ -105,14 +105,15 @@ export function Viewport() {
       return
     }
 
-    // Handle line tool two-click
+    // Handle line tool two-click — lineDrawState tracks first vs second click
     if (armedTool === 'line' || armedTool === 'line-start') {
       const wp = screenToWorld(sx, sy, vp.panX, vp.panY, vp.zoom)
       if (!lineDrawState) {
+        // First click: record start point; keep armedTool='line' so overlay+highlight stay
         setLineDrawState({ x1: wp.x, y1: wp.y })
-        setArmedTool('line-start')
         setLinePreview({ x: wp.x, y: wp.y })
       } else {
+        // Second click: complete line
         const x1 = lineDrawState.x1
         const y1 = lineDrawState.y1
         const newLine = createItem({

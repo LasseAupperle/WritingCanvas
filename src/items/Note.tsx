@@ -72,8 +72,9 @@ export function NoteCard({ item, isSelected, onPointerDown, onPointerMove, onPoi
           editor={editor}
           tippyOptions={{
             duration: 100,
-            appendTo: () => document.body,
+            appendTo: () => document.getElementById('root') ?? document.body,
             zIndex: 9999,
+            popperOptions: { strategy: 'fixed' },
           }}
         >
           <div
